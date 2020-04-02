@@ -19,8 +19,7 @@ from .views import ProjectDetailView, MapDetailView, HomeView
 from django.urls.conf import include
 from django.conf import settings
 from django.conf.urls.static import static
-from maps.views import map_proxy, toggle, reorder, get_map_config, docs2json, clus2json,\
-    BrowseView, OverlayView
+from maps.views import map_proxy, toggle, reorder, get_map_config, docs2json, BrowseView, OverlayView
 
 urlpatterns = [
     path('', HomeView.as_view()),
@@ -37,7 +36,6 @@ urlpatterns = [
     path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),
     path('<slug:slug>/', ProjectDetailView.as_view(),name='project-detail'),
     path('docs', docs2json),
-    path('clus', clus2json),
     
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
