@@ -17,7 +17,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 
 from .models import Map, Project, UserConfig
-from maps.models import DocumentGroup, Document
+from maps.models import DocumentGroup
 from sorl.thumbnail.shortcuts import get_thumbnail
 
 
@@ -154,6 +154,8 @@ def get_map_config(request, pk):
 def docs2json(request):
     ''' return json response with all documents grouped by theme '''
     
+    from maps.engine import engine
+    
     def process_group(cluster, group, result):
         data = {
             'id': group.id,
@@ -180,9 +182,10 @@ def docs2json(request):
             if doc.doc:
                 item['url'] = doc.doc.url
                 try:
-                    img = get_thumbnail(doc.doc, 'x600')
-                    if img:
-                        item['img'] = img.url
+                    with engine(doc.doc.name):
+                        img = get_thumbnail(doc.doc, 'x600')
+                        if img:
+                            item['img'] = img.url
                 except ValueError:
                     pass
             result.append(item)
@@ -198,49 +201,3 @@ def docs2json(request):
     process_group(cluster, root, result)
     return JsonResponse({'results': result})
 
-def clus2json(request):
-    ''' return json response with documents grouped by cluster '''
-    result = []
-    for cluster in range(1,9):
-        key = str(cluster)
-        name = CLUSTERS.get(key,f'Cluster{key}')
-        data = {'cluster': cluster, 'name': name, 'documents': [], 'folders': []}
-        docs = Document.objects.filter(cluster=cluster)
-        for group in docs.values_list('group__name',flat=True).distinct():
-            # group ends with Maps or Models. Strip the last s
-            tag = group[:-1] if group.endswith('s') else group
-            items = [{'id': doc.id,
-                      'name': f'{tag} of {doc.name}',
-                      'description': doc.description,
-                      'url': doc.url
-                      } 
-                    for doc in docs.filter(group__name=group)]
-            data['folders'].append({'name': group, 'folders':[], 'documents': items})
-        result.append(data)
-    return JsonResponse({'results':  [{'folders': result}] })
-
-def docs2tree(request):
-    ''' return json response for treeview '''
-    
-    def process_group(group, result):
-        data = {
-            'text': group.name,
-            'nodes': process_docs(group),
-        }
-        result.append(data)
-        for child in group.documentgroup_set.all():
-            process_group(child, data['nodes'])
-
-    def process_docs(group):
-        result = []
-        for doc in group.document_set.order_by('name'):
-            result.append({
-                'text': doc.name,
-                'href': doc.url
-                })
-        return result
-    
-    root = DocumentGroup.objects.get(parent__isnull=True)
-    result = []
-    process_group(root, result)
-    return JsonResponse({'tree': result})
