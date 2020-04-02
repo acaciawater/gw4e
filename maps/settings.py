@@ -130,7 +130,7 @@ DATABASES = {
     },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'maps',
+        'NAME': 'gw4e',
     }
 }
 
