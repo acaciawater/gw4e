@@ -3,12 +3,10 @@
 {% block title %}GW4E Dissemination Tool{% endblock %}
 {% block script %}
 {{ block.super }}
-<script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 <script src="/static/js/bstreeview.js"></script>
 {% endblock %}
 {% block style %}
 {{ block.super }}
-<link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
 <link rel="stylesheet" href="/static/css/bstreeview.css"/>
 <style>
 
@@ -26,21 +24,10 @@
   margin: auto;
 }
 
-.center {
-}
-
 #tree1 {
   height: 600px;
   max-height: 600px;
   overflow-y: auto;
-}
-
-.list-group-item {
-	padding-top: 0.5em;
-	padding-bottom: 0.5em;
-}
-
-.container {
 }
 
 </style>
@@ -68,39 +55,54 @@ The project is funded by the European Union and managed by <a href="//www.unicef
   	<div id="tree1"></div>
 </div>
 <div class="col col-9">
-	<div id="preview"></div>
+	<div id="preview" class="d-flex justify-content-center align-items-center h-100"><i>(No preview available)</i></div>
 </div>
 </div>
 </div>
 
 <script>
 
-function documentNodes(group) {
-	return group.documents.map(doc => {
-		return {
-			text: doc.name,
-			href: doc.url,
-			img: doc.img
-		}
-	})
-}
-
-
-function groupNodes(group) {
-	return group.folders.map(folder => {
-		return {
-			text: folder.name,
-			nodes: [...documentNodes(folder), ...groupNodes(folder)]
-		}
-	})
-}
-
-
+/**
+ * get data from backend and transform to structure for treeview
+ * @todo: let backend return data in format suitable for treeview
+ */
 function getTreeData(url) {
+	const getGroup = group => {
+		const getDocs = group => {
+			return group.documents.map(doc => {
+				return {
+					text: doc.name,
+					href: doc.url,
+					img: doc.img
+				}
+			})
+		} 
+		return group.folders.map(folder => {
+			return {
+				text: folder.name,
+				nodes: [...getDocs(folder), ...getGroups(folder)]
+			}
+		})
+	}
+
 	return $.getJSON(url).then(response => {
 		const tree = response.results.map(group => groupNodes(group))
 		return tree[0]
 	})
+}
+
+var previewTimer = undefined
+
+function clearPreviewTimer() {
+	if (previewTimer) {
+		window.clearTimeout(previewTimer)
+		previewTimer = undefined
+	}	
+}
+
+function showContent(content) {
+	$("#preview").html("Loading...")
+	$("#preview").html(content)
 }
 
 function loadTree(cluster) {
@@ -110,28 +112,33 @@ function loadTree(cluster) {
 	}
 	getTreeData(url).then(tree => {
 		$("#tree1").bstreeview({data: tree})
-		$("#tree1 .list-group-item").on("mouseenter", function(sender, args) {
+		const items = $("#tree1 .list-group-item") 
+		items.on("mouseleave", function() {
+			clearPreviewTimer()
+		})
+		items.on("mouseenter", function() {
+			clearPreviewTimer()
 			const thumb = $(this).attr('thumb')
-			let html = ''
+			let content = ''
 			if (thumb) {
-				html = `<img class="preview" src="${thumb}">`
+				content = `<img class="preview" src="${thumb}">`
 				const link = $(this).find("a[href]").first()
 				if (link) {
 					const href = link.attr("href")
-					html = `<a href="${href}" title="Click to inspect or download">${html}</a>`
+					content = `<a href="${href}" title="Click to open">${content}</a>`
 				} 
 			}
 			else {
-				html = '<p class="d-flex justify-content-center align-items-center h-100"><i>(No preview available)</i></p>'
+				content = '<i>(No preview available)</i>'
 			}
-			$("#preview").html(html)
+			// show preview content when mouse is 800 msec on item 
+			previewTimer = window.setTimeout(content => showContent(content), 800, content)
 		})
 	})
 }
 
 function changeCluster() {
 	const cluster = $("#cluster").val()
-// 	console.log(`cluster${cluster}`)
 // 	loadTree(cluster)
 	location.reload()
 }
