@@ -154,9 +154,21 @@ function toggleLayer (event) {
   $.post('toggle/', JSON.stringify([name]))
 }
 
+function sanitizeOptions(layer) {
+	const except = ['legend','displayName','visible','service','url','clickable','downloadUrl','stylesheet']
+	return Object.entries(layer).reduce((obj, item) => {
+		const [key, value] = item
+		if (!except.includes(key)) {
+			obj[key]=value
+		}
+		return obj
+	}, {}) 
+}
+
 async function addOverlay (map, layer) {
   if (layer) {
-    const overlay = L.tileLayer.betterWms(layer.url, layer)
+	const options = sanitizeOptions(layer)
+    const overlay = L.tileLayer.betterWms(layer.url, options)
     if (layer.visible) {
       overlay.addTo(map)
     }
