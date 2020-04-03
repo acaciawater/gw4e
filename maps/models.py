@@ -18,6 +18,8 @@ from sorl.thumbnail import ImageField
 from wms.models import Layer as WMSLayer
 from wms.models import Server
 
+import logging
+logger = logging.getLogger(__name__)
 
 class MapsModel(models.Model):
     '''
@@ -229,8 +231,8 @@ class Layer(MapsModel):
             ret['maxZoom'] = self.maxzoom
         try:
             ret['legend'] = self.layer.legend_url()
-        except:
-            # logger.error('Failed to retrieve legend url')
+        except Exception as e:
+            logger.error('Failed to retrieve legend url: %s' % e)
             pass  # ret['legend'] = ''
         return ret
 
