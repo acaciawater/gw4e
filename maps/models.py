@@ -219,6 +219,8 @@ class Layer(MapsModel):
             'clickable': self.clickable,
             'displayName': self.layer.title,
         }
+        if self.layer.tiled:
+            ret['tiled'] = True
         if self.properties:
             ret['propertyName'] = self.properties
         if self.allow_download and self.download_url:
