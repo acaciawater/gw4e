@@ -231,6 +231,7 @@ class Layer(MapsModel):
             ret['maxZoom'] = self.maxzoom
         try:
             ret['legend'] = self.layer.legend_url()
+            logger.debug(ret['legend'])
         except Exception as e:
             logger.error('Failed to retrieve legend url: %s' % e)
             pass  # ret['legend'] = ''
