@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
-{% block title %}GW4E Dissemination Tool{% endblock %}
+{% block title %}GW4E Documents{% endblock %}
 {% block script %}
 {{ block.super }}
 <script src="/static/js/bstreeview.js"></script>
@@ -9,6 +9,15 @@
 {{ block.super }}
 <link rel="stylesheet" href="/static/css/bstreeview.css"/>
 <style>
+
+.content {
+  background-color: white;
+  padding: 24px 2% 0 2%
+}
+
+h2,h3 {
+  padding-bottom: 1em;
+}
 
 #preview {
   height: 638px;
@@ -34,11 +43,10 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-<h2 class="mt-3">Groundwater Mapping for Climate Resilient WASH</h2>	
-<p>This website presents the results of the project "Groundwater Mapping for Climate Resilient WASH in arid and semi-arid areas of Ethiopia".
-The project is funded by the European Union and managed by <a href="//www.unicef.org/ethiopia">Unicef Ethiopia</a>. Contracting parties are <a href="//www.acaciawater.com">Acacia Water</a> and <a href="//www.aquacon.info">Aquacon</a>
-</p>
-<p>Select a document or map below</p>
+<div class="content">
+<h2 class="text-center">Groundwater Mapping<br>for Climate Resilient WASH in Ethiopia</h2>	
+<h3 class="text-center">Documents</h3>
+<hr/>
 <div class="row row-fluid">
 <div class="col col-3">
     <select id="cluster" class="custom-select" onchange="changeCluster()">
@@ -55,7 +63,8 @@ The project is funded by the European Union and managed by <a href="//www.unicef
   	<div id="tree1"></div>
 </div>
 <div class="col col-9">
-	<div id="preview" class="d-flex justify-content-center align-items-center h-100"><i>(No preview available)</i></div>
+	<div id="preview" class="d-flex justify-content-center align-items-center h-100"><i class="text-muted">Select a document</i></div>
+</div>
 </div>
 </div>
 </div>
@@ -80,13 +89,13 @@ function getTreeData(url) {
 		return group.folders.map(folder => {
 			return {
 				text: folder.name,
-				nodes: [...getDocs(folder), ...getGroups(folder)]
+				nodes: [...getDocs(folder), ...getGroup(folder)]
 			}
 		})
 	}
 
 	return $.getJSON(url).then(response => {
-		const tree = response.results.map(group => groupNodes(group))
+		const tree = response.results.map(group => getGroup(group))
 		return tree[0]
 	})
 }
@@ -129,7 +138,7 @@ function loadTree(cluster) {
 				} 
 			}
 			else {
-				content = '<i>(No preview available)</i>'
+				return; //content = '<i>(No preview available)</i>'
 			}
 			// show preview content when mouse is 800 msec on item 
 			previewTimer = window.setTimeout(content => showContent(content), 800, content)
