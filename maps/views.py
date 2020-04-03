@@ -21,7 +21,8 @@ from maps.models import DocumentGroup
 from sorl.thumbnail.shortcuts import get_thumbnail
 
 
-class MapDetailView(LoginRequiredMixin, DetailView):
+#class MapDetailView(LoginRequiredMixin, DetailView):
+class MapDetailView(DetailView):
     ''' View with leaflet map, legend and layer list '''
     model = Map
 
@@ -58,7 +59,7 @@ class ProjectDetailView(MapDetailView):
 
 
 @csrf_exempt
-@login_required
+#@login_required
 def reorder(request, pk):
     ''' reorder layers in map and save to user config
         request.body contains names of layers as json array in proper order
@@ -85,7 +86,7 @@ def reorder(request, pk):
 
 
 @csrf_exempt
-@login_required
+#@login_required
 def toggle(request, pk):
     ''' toggle visibility of layers in map and save to user config
         request.body contains names of layers as json array in proper order
@@ -142,7 +143,7 @@ def map_proxy(request):
     return redirect('map-detail', pk=map_object.pk)
 
 
-@login_required
+#@login_required
 def get_map_config(request, pk):
     ''' return user's layer configuration for all groups in the map '''
     map_object = get_object_or_404(Map, pk=pk)
@@ -150,7 +151,7 @@ def get_map_config(request, pk):
     UserConfig.sync(user, map_object)
     return HttpResponse(UserConfig.groups(user, map_object), content_type='application/json')
 
-
+#@login_required
 def docs2json(request):
     ''' return json response with all documents grouped by theme '''
     

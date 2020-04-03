@@ -251,6 +251,9 @@ class UserConfig(models.Model):
     @classmethod
     def sync(cls, user, map_instance):
         ''' Synchronize user configuration with default map layers '''
+        if user.is_anonymous:
+            return 0;
+
         layers = map_instance.layer_set.all()
         # Delete configuration for layers that are not on the map anymore
         cls.objects.filter(user=user, layer__map=map_instance).exclude(
@@ -268,6 +271,10 @@ class UserConfig(models.Model):
     @classmethod
     def update(cls, user, map_instance):
         ''' Update user configuration from default map layers. (This is a reset to default) '''
+        
+        if user.is_anonymous:
+            return 0;
+
         layers = map_instance.layer_set.all()
         # Delete configuration for layers that are not on the map anymore
         cls.objects.filter(user=user, layer__map=map_instance).exclude(
@@ -294,12 +301,17 @@ class UserConfig(models.Model):
                 groups[name] = collections.OrderedDict()
             groups[name][layer.layer.title] = layer.wms_options()
 
-        for config in cls.objects.filter(user=user, layer__map=map_instance).order_by('order'):
-            layer = config.layer
+        if user.is_anonymous:
+            # use default order and visibility
+            for layer in map_instance.layer_set.order_by('order'):
+                add(layer)
+        else:
             # set visibility and order according to user's preference
-            layer.order = config.order
-            layer.visible = config.visible
-            add(layer)
+            for config in cls.objects.filter(user=user, layer__map=map_instance).order_by('order'):
+                layer = config.layer
+                layer.order = config.order
+                layer.visible = config.visible
+                add(layer)
         return json.dumps(groups)
 
     def __str__(self):
