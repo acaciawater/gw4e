@@ -161,7 +161,7 @@ LOGGING = {
             'level': 'DEBUG',
             'formatter': 'simple'
         },
-        'maps.management': {
+        'maps': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'formatter': 'simple'
