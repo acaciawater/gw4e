@@ -155,7 +155,7 @@ function toggleLayer (event) {
 }
 
 function sanitizeOptions(layer) {
-	const except = ['legend','visible','service','url','clickable','downloadUrl','stylesheet']
+	const except = ['legend','url','downloadUrl','stylesheet']
 	return Object.entries(layer).reduce((obj, item) => {
 		const [key, value] = item
 		if (!except.includes(key)) {
