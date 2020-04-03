@@ -77,7 +77,7 @@ $(function() {
 }
 
 h2 {
-  padding-bottom: 1em;
+  padding-bottom: 0.5em;
 }
 
 .btn-primary.custom {
@@ -94,8 +94,12 @@ h2 {
 <h3 class="text-center">Dissemination of project results</h3>
 <hr/>
 <div class="row">
-<div class="col col-4"><a class="btn btn-primary custom" role="button" href="/browse" target="_blank">Documents</a></div>
-<div class="col col-8"><div id="map"></div><i class="text-muted"><small>Click on a cluster to open the map viewer</small></i></div>
+<div class="col">
+<div id="map" class="mb-2"></div>
+<span><i class="text-muted"><small>Click on a cluster to open the map viewer</small></i>
+<a class="btn btn-primary custom float-right" role="button" href="/browse" target="_blank">Documents</a>
+</span>
+</div>
 </div>
 </div>
 <div class="note">
