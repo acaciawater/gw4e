@@ -122,6 +122,7 @@ class OverlayView(TemplateView):
 
 
 CLUSTERS = {
+    '0': 'Ethiopia', # only for admins
     '1': 'Wag Himra',
     '2': 'Afar',
     '3': 'Siti',
@@ -138,7 +139,7 @@ def map_proxy(request):
     cluster = request.GET.get('cluster')
     if not cluster:
         return HttpResponseNotFound('Cluster name or number is missing.')
-    clustername = CLUSTERS[cluster] if cluster in '12345678' else cluster
+    clustername = CLUSTERS[cluster] if cluster in '012345678' else cluster
     map_object = get_object_or_404(Map, name__icontains=clustername)
     return redirect('map-detail', pk=map_object.pk)
 
