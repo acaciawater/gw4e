@@ -211,6 +211,7 @@ class Layer(MapsModel):
         '''
         ret = {
             'url': self.layer.server.url,
+            'version': self.layer.server.version,
             'layers': self.layer.layername,
             'format': self.format,
             'visible': self.visible,
