@@ -1,6 +1,6 @@
 Django<3.0
-OWSLib==0.17.1
-Pillow==6.0.0
+OWSLib~=0.19
+Pillow~=7.1
 django-cors-headers==3.0.1
 django-debug-toolbar==2.0
 sorl-thumbnail==12.6.3
