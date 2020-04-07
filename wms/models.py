@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from owslib.wms import WebMapService
+from django.utils.functional import cached_property
 
 WMS_VERSIONS=(
     ('1.1.1','1.1.1'),
@@ -11,15 +12,16 @@ class Server(models.Model):
     name = models.CharField(_('name'), max_length=100, unique=True)
     url = models.URLField(_('url'), max_length=255)
     version = models.CharField(_('version'), max_length=10, default='1.3.0',choices=WMS_VERSIONS)
-    
+            
     def __str__(self):
         return self.name
 
+    @cached_property
     def service(self):
         return WebMapService(self.url, self.version)
     
     def layerDetails(self, layername = None):
-        service = self.service()
+        service = self.service
         if layername is None:
             # return details of all layers
             return {layer: service[layer] for layer in service.contents}
@@ -31,7 +33,7 @@ class Server(models.Model):
                 return {}
     
     def enumLayers(self):
-        for layer in self.service().contents:
+        for layer in self.service.contents:
             yield layer
 
     def updateLayers(self):
@@ -51,7 +53,7 @@ class Server(models.Model):
                 
     def getFeatureInfo(self,layers,xy,srs='EPSG:3857'):
         x,y = xy
-        response = self.service().getfeatureinfo(
+        response = self.service.getfeatureinfo(
             layers=layers,
             srs=srs,
             bbox=(x-1,y-1,x+1,y+1),
@@ -74,7 +76,8 @@ class Layer(models.Model):
     tiled.Boolean=True
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True,default='')
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
-
+    legend = models.URLField(_('legend_url'), null=True, blank=True)
+    
     def __str__(self):
         return '{}:{}'.format(self.server, self.layername)
 
@@ -100,16 +103,18 @@ class Layer(models.Model):
             return self.set_extent()
         else:
             return list(map(float,self.bbox.split(',')))
+
+    def _update_legend(self, style='default'):
+        url = self.details().styles[style]['legend']
+        if url:
+            url += '&LAYERTITLE=FALSE' 
+        self.legend = url
+        self.save(update_fields=('legend',))
+        return url
     
     def legend_url(self, style='default'):
-        try:
-            url = self.details().styles[style]['legend']
-            if url:
-                url += '&LAYERTITLE=FALSE' 
-            return url
-        except:
-            return None
-
+        return self._update_legend(style) if self.legend is None else self.legend
+    
 class Meta:
         verbose_name = _('WMS-Layer')
     
