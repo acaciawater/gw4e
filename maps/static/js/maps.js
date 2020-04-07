@@ -68,16 +68,19 @@ function toggleLayer (event) {
   const legend = $(icon).next()
   const name = legend.text()
   const layer = overlayLayers.find(o => o.options.displayName === name)
+  const parent = $(icon).parent()
   if (layer.options.visible) {
     theMap.removeLayer(layer)
     layer.options.visible = false
     icon.className = icon.className.replace(iconVisible, iconInvisible)
-    legend.next('.collapse').collapse('hide')
+    const col = parent.find('.collapse')
+    col.collapse('hide')
   } else {
     theMap.addLayer(layer)
     layer.options.visible = true
     icon.className = icon.className.replace(iconInvisible, iconVisible)
-    legend.next('.collapse').collapse('show')
+    const col = parent.find('.collapse')
+    col.collapse('show')
   }
   reorderOverlays(overlayLayers)
   // inform backend about visibility change
