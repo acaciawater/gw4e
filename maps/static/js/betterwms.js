@@ -1,12 +1,12 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 /**
- *
+ * 
  */
 L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
 
   /**
-   * creates an XSLTProcessor and loads stylesheet
-   */
+	 * creates an XSLTProcessor and loads stylesheet
+	 */
   loadStylesheet: function (url) {
     const http = new XMLHttpRequest()
     http.open('GET', url, false)
@@ -21,17 +21,17 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
   onAdd: function (map) {
     // Triggered when the layer is added to a map.
     L.TileLayer.WMS.prototype.onAdd.call(this, map)
-    //    if (this.wmsParams.clickable) {
-    //      map.on('click', this.getFeatureInfo, this);
-    //    }
+    // if (this.wmsParams.clickable) {
+    // map.on('click', this.getFeatureInfo, this);
+    // }
   },
 
   onRemove: function (map) {
     // Triggered when the layer is removed from a map.
     L.TileLayer.WMS.prototype.onRemove.call(this, map)
-    //    if (this.wmsParams.clickable) {
-    //      map.off('click', this.getFeatureInfo, this);
-    //    }
+    // if (this.wmsParams.clickable) {
+    // map.off('click', this.getFeatureInfo, this);
+    // }
   },
 
   formatFeatureInfoResponseXSLT: function (response) {
@@ -64,13 +64,10 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
           if (layer.children) {
             layer.children.forEach(item => {
               if (item.tagName === 'Attribute') {
-                //  Raster Info: single attribute without feature(s)
+                // Raster Info: single attribute without feature(s)
                 const value = item.attr.value
                 itemCount++
-                html += `<tr>
-		    					<td>${layerName}</td>
-		    					<td>${value}</td>
-		    					</tr>`
+                html += `<tr><td>${layerName}</td><td>${value}</td></tr>`
               } else if (item.tagName === 'Feature') {
                 // Vector Info (features)
                 const id = item.attr.id
@@ -80,12 +77,9 @@ L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
                       const name = property.attr.name
                       if (!props || props.includes(name)) {
                         const value = property.attr.value
-                        // console.info(`layer=${layerName}, feature=${id}, ${name}=${value}`);
+                        // console.info(`layer=${layerName}, feature=${id}, ${name}=${value}`)
                         itemCount++
-                        html += `<tr>
-					    					<td>${name}</td>
-					    					<td>${value}</td>
-					    					</tr>`
+                        html += `<tr><td>${name}</td><td>${value}</td></tr>`
                       }
                     }
                   })

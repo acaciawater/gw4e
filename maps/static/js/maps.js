@@ -40,77 +40,7 @@ function restoreBounds (map) {
   return false
 }
 
-var redBullet = L.icon({
-  iconUrl: '/static/red_marker16.png',
-  iconSize: [12, 12],
-  iconAnchor: [6, 6],
-  popupAnchor: [0, 0]
-})
-
 var theMap = null
-var markers = [] // Should be associative array: {} ??
-
-/**
- * Adds a location item (marker) to the map
- * @param map
- * @param item
- * @returns
- */
-function addItemToMap (item, map, urls) {
-  const marker = L.marker([item.lat, item.lon], { title: item.name, icon: redBullet })
-  markers[item.id] = marker
-  marker.bindPopup('Loading...', { maxWidth: 'auto' })
-  marker.bindTooltip(item.name, { permanent: true, className: 'label', opacity: 0.7, direction: 'top', offset: [0, -10] })
-  marker.on('click', function (e) {
-    const popup = e.target.getPopup()
-    // retrieve popup content from remote site
-    $.get(urls.popup + item.id)
-      .done(function (data) {
-        // convert paths like href="/net/.." or src="/static/.." to absolute urls using server url as base
-        data = data.replace(/(((href|src)=['"])\/)/g, '$2' + urls.server + '/')
-        popup.setContent(data)
-        popup.update()
-      })
-      .fail(function () {
-        popup.closePopup()
-      })
-  })
-  return marker.addTo(map)
-}
-
-/**
- * Adds location item to list
- * @param item
- * @param list
- * @returns
- */
-function addItemToList (item, list) {
-  let date = ''
-  let value = ''
-  if (item.latest) {
-    date = new Date(item.latest.time).toLocaleDateString('nl-NL', dateOptions)
-    value = `${item.latest.value.toPrecision(3)} ${item.latest.unit}`
-  }
-  list.append(`<a class="list-group-item list-group-item-action" 
-    href="/chart/${item.id}/" onmouseover="showMarker(${item.id});" onmouseout="hideMarker();">
-    ${item.name}
-    <span class="float-right"><small>${date}</small></span><br>
-    <small>${item.description}<span class="float-right">${value}</span></small></a>`)
-}
-
-function addItems (map, list, urls) {
-  return $.getJSON(urls.items).then(data => {
-    const bounds = new L.LatLngBounds()
-    $.each(data, (key, item) => {
-      const marker = addItemToMap(item, map, urls)
-      bounds.extend(marker.getLatLng())
-      addItemToList(item, list)
-    })
-    map.fitBounds(bounds)
-    return data
-  })
-}
-
 var overlayLayers = []
 const iconVisible = 'far fa-check-square'
 const iconInvisible = 'far fa-square'
@@ -169,6 +99,9 @@ async function addOverlay (map, layer) {
   if (layer) {
 	const options = sanitizeOptions(layer)
     const overlay = L.tileLayer.betterWms(layer.url, options)
+    overlay.on('load',function() {
+    	console.debug(`Overlay loaded: ${overlay}`)
+    })
     if (layer.visible) {
       overlay.addTo(map)
     }
@@ -194,111 +127,6 @@ async function addOverlays (map, list, layers) {
   })
 }
 
-var hilite = null
-var hiliteVisible = false
-
-function showHilite (marker) {
-  if (marker == null || theMap == null) { return }
-
-  if (!hilite) {
-    hilite = new L.circleMarker(marker.getLatLng(), { radius: 20, color: 'green' })
-      .addTo(theMap)
-  } else {
-    hilite.setLatLng(marker.getLatLng())
-    if (!hiliteVisible) {
-      theMap.addLayer(hilite)
-    }
-  }
-  hiliteVisible = true
-}
-
-function hideHilite () {
-  if (hiliteVisible) {
-    hilite.remove()
-    hiliteVisible = false
-  }
-}
-
-function panToMarker (marker) {
-  theMap.panTo(marker.getLatLng())
-}
-
-var panTimeoutId
-
-function clearPanTimer () {
-  window.clearTimeout(panTimeoutId)
-  panTimeoutId = undefined
-}
-
-function showMarker (m) {
-  const marker = markers[m]
-  showHilite(marker)
-  panTimeoutId = window.setTimeout(panToMarker, 1000, marker)
-}
-
-function hideMarker () {
-  hideHilite()
-  clearPanTimer()
-}
-
-L.Control.LabelControl = L.Control.extend({
-  onAdd: function (map) {
-    var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom')
-    var img = L.DomUtil.create('a', 'fa fa-lg fa-tags', container)
-    img.title = 'Toggle labels'
-    img.setAttribute('role', 'button')
-    img.setAttribute('aria-label', 'Toggle Labels')
-
-    L.DomEvent.on(container, 'click', function (e) {
-      toggleLabels()
-      L.DomEvent.preventDefault()
-      L.DomEvent.stopPropagation()
-    })
-
-    return container
-  },
-
-  onRemove: function (map) {
-    // Nothing to do here
-  }
-
-})
-
-L.control.labelcontrol = function (opts) {
-  return new L.Control.LabelControl(opts)
-}
-
-var labelsShown = true
-
-function showLabels () {
-  if (!labelsShown) {
-    if (markers) {
-      markers.forEach(function (marker) {
-        marker.openTooltip()
-      })
-    }
-    labelsShown = true
-  }
-}
-
-function hideLabels () {
-  if (labelsShown) {
-    if (markers) {
-      markers.forEach(function (marker) {
-        marker.closeTooltip()
-      })
-    }
-    labelsShown = false
-  }
-}
-
-function toggleLabels () {
-  if (labelsShown) {
-    hideLabels()
-  } else {
-    showLabels()
-  }
-}
 
 /**
  * Initializes leaflet map
@@ -355,8 +183,6 @@ function initMap (div, options, id) {
   }
 
   restoreBounds(map)
-
-  // var control = L.control.labelcontrol({ position: 'topleft' }).addTo(map);
 
   L.control.scale({position:'bottomleft'}).addTo(map);
   
