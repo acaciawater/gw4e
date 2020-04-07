@@ -101,7 +101,7 @@ function sanitizeOptions(layer) {
 function createOverlay (map, layer) {
   if (layer) {
 	const options = sanitizeOptions(layer)
-    return L.tileLayer.betterWms(layer.url, options)
+	return options.tiled? L.tileLayer.betterWms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
   }
   return null
 }
