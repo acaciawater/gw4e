@@ -95,38 +95,51 @@ function sanitizeOptions(layer) {
 	}, {}) 
 }
 
-async function addOverlay (map, layer) {
+function createOverlay (map, layer) {
   if (layer) {
 	const options = sanitizeOptions(layer)
-    const overlay = L.tileLayer.betterWms(layer.url, options)
-    overlay.on('load',function() {
-    	console.debug(`Overlay loaded: ${overlay}`)
-    })
-    if (layer.visible) {
-      overlay.addTo(map)
-    }
-    return overlay
+    return L.tileLayer.betterWms(layer.url, options)
   }
+  return null
 }
+
+/**
+ * class to show spinner icons
+ */
+const spinner = 'fas fa-spinner fa-spin'
 
 async function addOverlays (map, list, layers) {
   return Object.keys(layers).map(name => {
     const layer = layers[name]
-    return addOverlay(map, layer).then(overlay => {
-      const id = overlayLayers.push(overlay) - 1
-      const icon = layer.visible ? iconVisible : iconInvisible
-      let item = `<li id=item_${id} class="list-group-item">
-        <i class="statusicon pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
-        <div data-toggle="collapse" href="#legend_${id}">${name}</div>`
-      if (layer.downloadUrl) {
-        item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
-      }
-      item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
-      list.append(item)
+    const overlay = createOverlay(map, layer)
+    const id = overlayLayers.push(overlay) - 1
+    const icon = layer.visible ? iconVisible : iconInvisible
+    let item = `<li id=item_${id} class="list-group-item">
+        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
+        <span data-toggle="collapse" href="#legend_${id}">${name}</span><i id="status_${id}" class="float-right"></i>`
+    if (layer.downloadUrl) {
+      item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+    }
+    item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+    list.append(item)
+
+    const statusid = `#status_${id}`
+    const status = $(statusid)
+    
+    overlay.on('add',function() {
+      status.addClass(spinner)
     })
+    overlay.on('load',function() {
+      status.removeClass(spinner)
+    })
+    overlay.on('error',function(evt) {
+      status.removeClass(spinner)
+    })
+    if (layer.visible) {
+      overlay.addTo(map)
+    }
   })
 }
-
 
 /**
  * Initializes leaflet map
