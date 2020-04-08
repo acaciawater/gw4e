@@ -20,13 +20,15 @@
 <script src="//unpkg.com/esri-leaflet@2.1.1/dist/esri-leaflet.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="/static/js/leaflet.wmslegend.js"></script>
-<script src="/static/js/betterwms.js"></script>
 <script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
 <script src="/static/js/inventory.js"></script>
+<script src="/static/js/featureinfo.js"></script>
+ 
 <script>
 
 var inventory = new Inventory()
+
 var legend;
 
 function getCookie(cookie) {
@@ -79,18 +81,9 @@ function propertyChanged() {
  * call getFeatureInfo on all WMS layers on the map and return contents of html table for popup
  */
 async function getFeatureInfo(map, evt) {
-	const layers = map._layers
-	const wmsKeys = Object.keys(layers).filter(key => {
-		const layer = layers[key]
-		return layer.wmsParams && layer.wmsParams.clickable
-	})
-	const promises = wmsKeys.map(key => {		
-		const layer = layers[key];
-	    const params = layer.getFeatureInfoParams(evt.latlng);
-	    return $.get(layer._url,params).then(response => {
-	    	return layer.formatFeatureInfoResponse(response);
-		})
-	})
+	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable)
+	const fi = new FeatureInfo()
+	const promises = layers.map(layer => fi.getFeatureInfo(evt, layer))
 	const featureInfo = await Promise.all(promises)
 	return featureInfo.filter(a => a.length > 0)
 }

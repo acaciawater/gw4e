@@ -44,6 +44,8 @@ var theMap = null
 var overlayLayers = []
 const iconVisible = 'far fa-check-square'
 const iconInvisible = 'far fa-square'
+const spinner = 'fas fa-spinner fa-spin'
+
 
 function reorderOverlays (layers) {
   // show layers in proper order on map
@@ -62,11 +64,6 @@ function sortOverlays (layers, keys) {
     return indexA > indexB ? 1 : indexA < indexB ? -1 : 0
   }))
 }
-
-/**
- * class to show spinner icons
- */
-const spinner = 'fas fa-spinner fa-spin'
 
 function toggleLayer (event) {
   const icon = event.target
@@ -109,7 +106,7 @@ function sanitizeOptions(layer) {
 function createOverlay (map, layer) {
   if (layer) {
 	const options = sanitizeOptions(layer)
-	const overlay = options.tiled? L.tileLayer.betterWms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
+	const overlay = options.tiled? L.tileLayer.wms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
     const id = overlayLayers.push(overlay) - 1
     overlay.id = id
     return overlay
@@ -134,10 +131,10 @@ async function addOverlays (map, list, layers) {
 	    list.append(item)
 	
 	    const status = $(`#status_${id}`)
-	    overlay.on('add',function() {
+	    overlay.on('loading',function(evt) {
 	      status.addClass(spinner)
 	    })
-	    overlay.on('load',function() {
+	    overlay.on('load',function(evt) {
 	      status.removeClass(spinner)
 	    })
 	    overlay.on('error',function(evt) {
