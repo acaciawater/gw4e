@@ -80,7 +80,7 @@ function propertyChanged() {
 /***
  * call getFeatureInfo on all WMS layers on the map and return contents of html table for popup
  */
-async function getFeatureInfo(map, evt) {
+async function getFeatureInfo(evt) {
 	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable)
 	const fi = new FeatureInfo()
 	const promises = layers.map(layer => fi.getFeatureInfo(evt, layer))
@@ -120,7 +120,7 @@ $(function() {
 		addAllOverlays(groups, map, list).then(() => {
 			map.on('click', evt => {
 				// query all visible wms layers
-				getFeatureInfo(map, evt).then(info => {
+				getFeatureInfo(evt).then(info => {
 					if (info.length > 0) {
 				    	L.popup({ maxWidth: 800})
 					    .setLatLng(evt.latlng)
