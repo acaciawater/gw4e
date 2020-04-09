@@ -132,7 +132,11 @@ $(function() {
 					if (info.length > 0) {
 				    	L.popup({ maxWidth: 800})
 					    .setLatLng(evt.latlng)
-					    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
+// 					    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
+					    .setContent('<h5 class="text-center unibar">Information</h5>\
+					    		<table class="table table-hover table-sm">\
+					    		<thead><tr><th>Layer</th><th>Attribute</th><th>Value</th></tr></thead><tbody>' + 
+					    		info.join('\n') + '</tbody></table>')
 					    .openOn(map)  	
 					}
 				})
