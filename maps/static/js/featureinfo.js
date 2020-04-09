@@ -1,5 +1,3 @@
-//import {xml2json} from '/static/js/xml2json.js'
-
 class FeatureInfo {
 	// auto excluded properties (feature ids)
 	excludes = ['fid','ogc_fid']
@@ -17,7 +15,7 @@ class FeatureInfo {
 	    }
 	    this.displayName = overlay.options.displayName
 	    this.layer = overlay.options.layers
-	    this.url = overlay._url
+	    this.url = overlay._wmsUrl || overlay._url
 	}
 	    
 	getFeatureInfo (evt,overlay) {
@@ -25,7 +23,7 @@ class FeatureInfo {
 			this.setOverlay(overlay)
 	    const params = this.getFeatureInfoParams(evt.latlng);
 	    return $.get(this.url,params).then(response => {
-	    	return this.formatFeatureInfoResponse(response);
+	    	return this.formatFeatureInfoResponse(response)
 		})
 	}
 
@@ -47,7 +45,7 @@ class FeatureInfo {
 	                // Raster Info: single attribute without feature(s)
 	                const value = item.attr.value
 	                itemCount++
-	                html += `<tr><td>${layerName}</td><td>${value}</td></tr>`
+	                html += `<tr><td colspan="2">${layerName}</td><td>${value}</td></tr>`
 	              } 
 	              else if (item.tagName === 'Feature') {
 	                // Vector Info (features)
@@ -59,10 +57,8 @@ class FeatureInfo {
 	                      if (!this.excludes.includes(name)) {
 		                      if (!this.props || this.props.includes(name)) {
 		                        const value = property.attr.value
-		                        // console.info(`layer=${layerName}, feature=${id},
-								// ${name}=${value}`)
 		                        itemCount++
-		                        html += `<tr><td>${name}</td><td>${value}</td></tr>`
+		                        html += `<tr><td>${layerName}</td><td>${name}</td><td>${value}</td></tr>`
 		                      }
 	                      }
 	                    }
