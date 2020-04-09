@@ -26,7 +26,7 @@
   </head>
 {% csrf_token %}
 <body>
-	<div class="container-fluid d-flex flex-column h-100 mx-0 px-0">
+	<div class="outer container-fluid d-flex flex-column h-100 mx-0 px-0">
     {% block header %}
     <nav class="navbar navbar-dark unibar">
 	    <li class="nav">
@@ -42,5 +42,6 @@
     {% endblock content %}
     {% block footer %}
     {% endblock footer %}
+    </div>
 </body>
 </html>

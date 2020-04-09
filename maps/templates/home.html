@@ -48,7 +48,7 @@ $(function() {
 <style>
 
 #map {
-  height: 480px;
+  height: 50%;
   border: 1px solid #1CABE3;
 }
 
@@ -89,12 +89,12 @@ h2 {
 {% endblock %}
 {% block content %}
 <div class="container">
-<div class="content">
+<div class="content h-100">
 <h2 class="text-center">Groundwater Mapping<br>for Climate Resilient WASH in Ethiopia</h2>	
 <h3 class="text-center">Dissemination of project results</h3>
 <hr/>
-<div class="row">
-<div class="col">
+<div class="row h-100">
+<div class="col h-100">
 <div id="map" class="mb-2"></div>
 <span class="text-muted"><small><i>Click on a cluster to open the map viewer, or preview a (non-validated) country-wide suitability map <a href="/map?cluster=0">here.</a></i>
 <a class="btn btn-primary custom float-right" role="button" href="/browse" target="_blank">Documents</a>

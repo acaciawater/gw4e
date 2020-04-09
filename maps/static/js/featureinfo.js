@@ -1,17 +1,19 @@
 //import {xml2json} from '/static/js/xml2json.js'
 
 class FeatureInfo {
+	// auto excluded properties (feature ids)
+	excludes = ['fid','ogc_fid']
 
 	constructor (overlay) {
 		if (overlay)
-			this.setOverLay(overlay)
+			this.setOverlay(overlay)
 	}
 
 	setOverlay (overlay) {
 		this.overlay = overlay
-	    this.propertyName = overlay.options.propertyName
-	    if (this.propertyName) {
-	    	this.propertyName = this.propertyName.split(',') 
+	    this.props = overlay.options.propertyName
+	    if (this.props) {
+	    	this.props = this.props.split(',') 
 	    }
 	    this.displayName = overlay.options.displayName
 	    this.layer = overlay.options.layers
@@ -54,12 +56,14 @@ class FeatureInfo {
 	                  item.children.forEach(property => {
 	                    if (property.tagName === 'Attribute') {
 	                      const name = property.attr.name
-	                      if (!props || props.includes(name)) {
-	                        const value = property.attr.value
-	                        // console.info(`layer=${layerName}, feature=${id},
-							// ${name}=${value}`)
-	                        itemCount++
-	                        html += `<tr><td>${name}</td><td>${value}</td></tr>`
+	                      if (!this.excludes.includes(name)) {
+		                      if (!this.props || this.props.includes(name)) {
+		                        const value = property.attr.value
+		                        // console.info(`layer=${layerName}, feature=${id},
+								// ${name}=${value}`)
+		                        itemCount++
+		                        html += `<tr><td>${name}</td><td>${value}</td></tr>`
+		                      }
 	                      }
 	                    }
 	                  })
@@ -91,8 +95,8 @@ class FeatureInfo {
 		  query_layers: this.layer,
 		  info_format: 'text/xml'
 		}
-		if (this.propertyName) {
-	    	params.propertyName = this.propertyName 
+		if (this.overlay.options.propertyName) {
+	    	params.propertyName = this.overlay.options.propertyName 
 	    }
 	    return params
 	 }
