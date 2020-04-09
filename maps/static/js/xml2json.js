@@ -112,7 +112,8 @@ var xml2json = (function() {
 		 * @return {object} json
 		 */
 		docToJSON: function (doc) {
-			  return _getChildInfo(doc.childNodes)[0];
+			  let children = doc.childNodes;
+			  return children? _getChildInfo(children)[0]: {};
 		},
 		
 		/**
