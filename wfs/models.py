@@ -4,8 +4,10 @@ from django.utils.translation import gettext_lazy as _
 from owslib.wfs import WebFeatureService
 
 WFS_VERSIONS=(
-    ('1.0.0','1.1.0'),
-    ('2.0.0','3.0.0'),
+    ('1.0.0','1.0.0'),
+    ('1.1.0','1.1.0'),
+    ('2.0.0','2.0.0'),
+    ('3.0.0','3.0.0'),
     )
 class Server(models.Model):
     ''' WFS server '''
@@ -59,9 +61,7 @@ class Layer(models.Model):
     layername = models.CharField(_('layername'), max_length=100)
     title = models.CharField(_('title'), max_length=100)
     server = models.ForeignKey(Server,models.CASCADE,verbose_name=_('WMS Server'))
-    tiled = models.BooleanField(_('tiled'), default=True)
-    tiled.Boolean=True
-    attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True,default='')
+    bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
 
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)
@@ -70,13 +70,22 @@ class Layer(models.Model):
         for _key, value in self.server.layerDetails(self.layername).items():
             return value
     
-    def extent(self):
+    def get_extent(self):
         details = self.details()
-        return details.boundingBoxWGS84
+        return details.boundingBoxWGS84 if details else []
     
-    def legend_url(self, style='default'):
-        return self.details().styles[style]['legend']
-
+    def set_extent(self):
+        ext = self.get_extent()
+        self.bbox = ','.join(map(str,ext))
+        self.save(update_fields=('bbox',))
+        return ext
+    
+    def extent(self):
+        if not self.bbox:
+            return self.set_extent()
+        else:
+            return list(map(float,self.bbox.split(',')))
+            
     class Meta:
-        verbose_name = _('WMS-Layer')
+        verbose_name = _('WFS-Layer')
     

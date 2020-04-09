@@ -8,6 +8,7 @@ class LayerAdmin(admin.ModelAdmin):
     model = Layer
     list_display = ('server','title', 'layername')
     list_filter = ('server',)
+    search_fields = ('layername', 'title')
 
 class LayerInline(admin.TabularInline):
     model = Layer
