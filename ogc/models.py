@@ -1,64 +1,94 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from owslib.wms import WebMapService
+from owslib.wfs import WebFeatureService
+
+SERVICES = (
+    ('WMS','WMS'),
+    ('WFS','WFS')
+)
+
+VERSIONS = (
+    ('WMS', (
+        ('1.1.1','1.1.1'),
+        ('1.3.0','1.3.0'),
+        )
+    ),
+    ('WFS', (
+        ('1.0.0','1.0.0'),
+        ('1.1.0','1.1.0'),
+        ('2.0.0','2.0.0'),
+        ('3.0.0','3.0.0'),
+        )
+    )
+)
 
 class Server(models.Model):
-    ''' OGC server '''
+    ''' OWS server '''
     name = models.CharField(_('name'), max_length=100, unique=True)
     url = models.URLField(_('url'), max_length=255)
-    service_type = models.CharField(_('type'), max_length=4)
-    version = models.CharField(_('version'), max_length=10)
-    
+    service_type = models.CharField(_('type'), max_length=4, choices=SERVICES, default='WMS')
+    version = models.CharField(_('version'), max_length=10, choices=VERSIONS, default='1.3.0')
+
     def __str__(self):
         return self.name
 
+    @property
     def service(self):
-        raise NotImplementedError
+        if self.service_type == 'WMS':
+            return WebMapService(self.url, self.version)
+        elif self.service_type == 'WFS':
+            return WebFeatureService(self.url, self.version)
+        else:
+            raise ValueError('Service not supported')
 
-    def layerDetails(self, layername = None):
-        service = self.service
+    def layer_details(self, layername = None):
         if layername is None:
             # return details of all layers
+            service = self.service
             return {layer: service[layer] for layer in service.contents}
         else:
             # single layer
-            return {layername: service[layername]}
+            return {layername: self.service[layername]}
     
-    def enumLayers(self):
+    def enum_layers(self):
         for layer in self.service.contents:
             yield layer
 
-    def updateLayers(self):
+    def update_layers(self, delete_nonexisting=True):
 
-        # delete layers that are not reported in service contents
-        newLayers = set(self.enumLayers())
-        self.layer_set.exclude(layername__in=newLayers).delete()
+        if delete_nonexisting:
+            # delete layers that are not reported in service contents
+            newLayers = set(self.enumLayers())
+            self.layer_set.exclude(layername__in=newLayers).delete()
 
-        # create new layers if necessary
+        # create new layers
         numCreated = 0
-        for layername, details in self.layerDetails().items():
+        for layername, details in self.layer_details().items():
             _layer, created = self.layer_set.get_or_create(layername=layername,defaults = {
-                'title': details.title or layername
+                'title': details.title or layername,
+                'attribution': details.attribution.get('title','') if hasattr(details,'attribution') else ''
             })
             if created:
                 numCreated += 1
         return numCreated
                 
     class Meta:
-        abstract = True
-        verbose_name = _('OGC-Server')
+        verbose_name = _('Server')
         
 class Layer(models.Model):
-    ''' Layer in an OCG server '''
+    ''' Layer in an OWS server '''
     layername = models.CharField(_('layername'), max_length=100)
     title = models.CharField(_('title'), max_length=100)
     server = models.ForeignKey(Server,models.CASCADE,verbose_name=_('WMS Server'))
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
+    attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True)
 
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)
 
     def details(self):
-        for _key, value in self.server.layerDetails(self.layername).items():
+        for _key, value in self.server.layer_details(self.layername).items():
             return value
     
     def get_extent(self):
@@ -78,6 +108,5 @@ class Layer(models.Model):
             return list(map(float,self.bbox.split(',')))
             
     class Meta:
-        abstract = True
-        verbose_name = _('WFS-Layer')
+        verbose_name = _('Layer')
     

@@ -35,9 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django.contrib.gis',
-    'maps.apps.MapsConfig',
-    'wms.apps.WmsConfig',
-    'wfs.apps.WfsConfig',
+    'maps',
+    'wms',
+    'wfs',
+    'ogc',
     'debug_toolbar',
     'sorl.thumbnail',
 ]
