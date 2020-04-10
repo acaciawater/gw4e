@@ -84,6 +84,23 @@ class Layer(models.Model):
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True)
 
+    # WMS options
+    tiled = models.BooleanField(_('tiled'), default=True)
+    tiled.Boolean=True
+    legend = models.URLField(_('legend_url'), null=True, blank=True)
+
+    def _update_legend(self, style='default'):
+        url = self.details().styles[style]['legend']
+        if url:
+            url += '&LAYERTITLE=FALSE' 
+        self.legend = url
+        self.save(update_fields=('legend',))
+        return url
+    
+    def legend_url(self, style='default'):
+        return self._update_legend(style) if self.legend is None else self.legend
+    # ---------------------------------------------------------------------------
+    
     def __str__(self):
         return '{}:{}'.format(self.server, self.title or self.layername)
 
