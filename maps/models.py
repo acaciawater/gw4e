@@ -40,21 +40,6 @@ class MapsModel(models.Model):
         app_label = 'maps'
 
 
-class Timeseries(MapsModel):
-    ''' model that links with timeseries from a remote meetnet app '''
-    name = models.CharField(_('name'), max_length=100, unique=True)
-    server = models.URLField(_('server'))
-    locations = models.CharField(_('locations'), max_length=100)
-    popup = models.CharField(_('popup'), max_length=100)
-    chart = models.CharField(_('chart'), max_length=100)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name_plural = 'Timeseries'
-
-
 class Map(MapsModel):
     ''' Collection of map layers '''
     slug = models.SlugField(help_text=_('Short name for map'), null=True)
@@ -126,24 +111,6 @@ def map_save(sender, **kwargs):
     instance = sender
     if instance.slug is None:
         instance.slug = slugify(instance.name)
-
-
-class Mirror(Map):
-    ''' A map that mirrors all layers on a WMS server '''
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
-
-    def update_layers(self):
-        # update layer list on WMS server
-        self.server.updateLayers()
-
-        # update layer list of this map
-        self.layer_set.all().delete()
-        index = 0
-        for layer in self.server.layer_set.all():
-            self.layer_set.create(layer=layer, order=index, use_extent=False)
-            index += 1
-        return index
-
 
 class Group(models.Model):
     ''' Layer group '''
@@ -323,32 +290,6 @@ class UserConfig(models.Model):
     class Meta:
         verbose_name = 'User Preference'
         verbose_name_plural = 'User Preferences'
-
-
-class Project(MapsModel):
-    slug = models.SlugField(help_text=_('Short name for url'))
-    name = models.CharField(_('name'), max_length=100, unique=True, help_text=_(
-        'Descriptive name of project'))
-    title = models.CharField(_('tile'), max_length=100,
-                             help_text=_('Title on browser page'))
-    logo = models.ImageField(
-        _('logo'), upload_to='logos', null=True, blank=True)
-    map = models.ForeignKey(Map, models.SET_NULL, null=True,
-                            blank=True, verbose_name=_('map'))
-    timeseries = models.ForeignKey(
-        Timeseries, models.SET_NULL, null=True, blank=True, verbose_name=_('timeseries'))
-
-    def get_absolute_url(self):
-        return reverse('project-detail', args=[self.pk])
-
-    def __str__(self):
-        return self.name
-
-
-@receiver(pre_save, sender=Project)
-def project_save(_sender, instance, **_kwargs):
-    if instance.slug is None:
-        instance.slug = slugify(instance.name)
 
 
 class DocumentGroup(models.Model):

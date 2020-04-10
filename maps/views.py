@@ -6,8 +6,6 @@ Created on May 15, 2019
 import json
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http.response import HttpResponse, HttpResponseNotFound,\
     JsonResponse
@@ -16,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 
-from .models import Map, Project, UserConfig
+from .models import Map, UserConfig
 from maps.models import DocumentGroup
 from sorl.thumbnail.shortcuts import get_thumbnail
 
@@ -36,25 +34,6 @@ class MapDetailView(DetailView):
         map_object = self.get_map()
         context['map'] = map_object
         context['extent'] = map_object.extent()
-        return context
-
-
-class ProjectDetailView(MapDetailView):
-    ''' ModelView with link to remote meetnet app with monitoring locations and timeseries '''
-    model = Project
-
-    def get_map(self):
-        return self.get_object().map
-
-    def get_context_data(self, **kwargs):
-        context = MapDetailView.get_context_data(self, **kwargs)
-        project = self.get_object()
-        if project.timeseries:
-            series = project.timeseries
-            context['series'] = json.dumps({
-                'server': series.server, 'items': series.locations,
-                'popup': series.popup, 'chart': series.chart
-            })
         return context
 
 

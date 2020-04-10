@@ -2,19 +2,19 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.decorators import register
 from django.db.models import Max
+from django.db.models.fields import TextField
+from django.forms.widgets import Textarea
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 
-from maps.actions import update_mirror
 from maps.forms import LayerPropertiesForm, SelectMapForm
-from maps.models import Project, Timeseries, Group, Mirror, UserConfig,\
+from maps.models import Group, UserConfig, \
     DocumentGroup, Document
-
 from wms.models import Layer as WMSLayer
 
 from .models import Map, Layer
-from django.db.models.fields import TextField
-from django.forms.widgets import TextInput, Textarea
+
+
 admin.site.site_header = 'GW4E Administration'
 
 @register(Group)
@@ -152,20 +152,6 @@ class UserConfigAdmin(admin.ModelAdmin):
     list_filter = ('user', 'layer__map')
     list_display = ('layer', 'user', 'order', 'visible')
 
-
-@register(Mirror)
-class MirrorAdmin(MapAdmin):
-    actions = [update_mirror]
-
-
-@register(Timeseries)
-class TimeseriesAdmin(admin.ModelAdmin):
-    pass
-
-
-@register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    pass
 
 class DocumentInline(admin.TabularInline):
     model = Document

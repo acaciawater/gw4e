@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ProjectDetailView, MapDetailView, HomeView
+from .views import MapDetailView, HomeView
 from django.urls.conf import include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -27,14 +27,11 @@ urlpatterns = [
     path('browse', BrowseView.as_view(),name='browse'),
     path('view', OverlayView.as_view(),name='view'),
     path('admin/', admin.site.urls),
-    path('wms/', include('wms.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
     path('map/<int:pk>/toggle/', toggle,name='map-toggle'),
     path('map/<int:pk>/config/', get_map_config, name='map-config'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('map', map_proxy, name='cluster-view'),
-    path('<int:pk>/', ProjectDetailView.as_view(),name='project-detail'),
-    path('<slug:slug>/', ProjectDetailView.as_view(),name='project-detail'),
     path('docs', docs2json),
     
 ]
