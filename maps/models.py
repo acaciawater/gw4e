@@ -15,8 +15,8 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from sorl.thumbnail import ImageField
+from ogc.models import Layer as OCGLayer
 from wms.models import Layer as WMSLayer
-from wms.models import Server
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class Map(MapsModel):
         ''' return ordered json dictionary of all layers using wms title as key '''
         retval = collections.OrderedDict()
         for layer in self.layer_set.order_by('order'):
-            retval[layer.layer.title] = layer.wms_options()
+            retval[layer.layer.title] = layer.options()
         return json.dumps(retval)
 
     def groups(self):
@@ -63,13 +63,13 @@ class Map(MapsModel):
         if ungrouped:
             groups['Layers'] = collections.OrderedDict()
             for layer in ungrouped:
-                groups['Layers'][layer.layer.title] = layer.wms_options()
+                groups['Layers'][layer.layer.title] = layer.options()
 
         # add all groups and layers
         for group in self.group_set.order_by('name'):
             groups[group.name] = collections.OrderedDict()
             for layer in group.layer_set.order_by('order'):
-                groups[group.name][layer.layer.title] = layer.wms_options()
+                groups[group.name][layer.layer.title] = layer.options()
 
         return json.dumps(groups)
 
@@ -136,8 +136,7 @@ class Layer(MapsModel):
     Currently only WMS layers are supported
     '''
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
-    layer = models.ForeignKey(WMSLayer, models.CASCADE,
-                              verbose_name=_('WMS layer'), null=True)
+    layer = models.ForeignKey(OCGLayer, models.CASCADE, null=True)
     group = models.ForeignKey(Group, models.SET_NULL,
                               blank=True, null=True, verbose_name=_('group'))
     order = models.SmallIntegerField(_('order'))
@@ -172,9 +171,9 @@ class Layer(MapsModel):
         ''' return extent of WMS layer in WGS84 coordinates '''
         return self.layer.extent()
 
-    def wms_options(self):
+    def options(self):
         '''
-        returns options dict for L.tileLayer.wms
+        returns options dict for Leaflet overlays
         '''
         ret = {
             'url': self.layer.server.url,
@@ -269,7 +268,7 @@ class UserConfig(models.Model):
             name = layer.group.name if layer.group else 'Layers'
             if name not in groups:
                 groups[name] = collections.OrderedDict()
-            groups[name][layer.layer.title] = layer.wms_options()
+            groups[name][layer.layer.title] = layer.options()
 
         if user.is_anonymous:
             # use default order and visibility

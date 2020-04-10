@@ -3,6 +3,7 @@
 from django.db import migrations
 
 def migrate_to_ows(apps, schema_editor):
+    ''' copy wms and wfs layers to ogc app '''
     OGCServer = apps.get_model('ogc', 'Server')
     for service_type in ['WMS', 'WFS']:
         app_name = service_type.lower()
