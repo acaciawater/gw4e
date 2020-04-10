@@ -16,7 +16,6 @@ from django.utils.translation import gettext_lazy as _
 
 from sorl.thumbnail import ImageField
 from ogc.models import Layer as OCGLayer
-from wms.models import Layer as WMSLayer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -133,7 +132,6 @@ class Layer(MapsModel):
     '''
     Layer on the map.
     Layer can be configured (by order, visibility, opacity etc)
-    Currently only WMS layers are supported
     '''
     map = models.ForeignKey(Map, models.CASCADE, verbose_name=_('map'))
     layer = models.ForeignKey(OCGLayer, models.CASCADE, null=True)
