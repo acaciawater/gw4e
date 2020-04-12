@@ -78,7 +78,7 @@ function propertyChanged() {
 }
 
 /***
- * call getFeatureInfo on all WMS layers on the map and return contents of html table for popup
+ * call getFeatureInfo on all layers on the map and return contents of html table for popup
  */
 async function getFeatureInfo(evt) {
 	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable && layer.options.visible)
@@ -115,12 +115,6 @@ $(function() {
 		map.fitBounds(bounds);
 	}
 
-	// set max heigth of listwrapper (do not grow below screen)
-	const mapHeight = $("#map").height() 
-	$("#listwrapper").css('max-height',mapHeight)
-	const maxHeight = $("#listwrapper").css('max-height')
-	console.debug(`map-height: ${mapHeight}, max-height: ${maxHeight}`)
-
 	// load overlays
 	const list = $("#list");
 	overlayLayers = [];
@@ -132,7 +126,6 @@ $(function() {
 					if (info.length > 0) {
 				    	L.popup({ maxWidth: 800})
 					    .setLatLng(evt.latlng)
-// 					    .setContent('<table class="table table-sm">' + info.join('\n') + '</table>')
 					    .setContent('<h5 class="text-center unibar">Information</h5>\
 					    		<table class="table table-hover table-sm">\
 					    		<thead><tr><th>Layer</th><th>Attribute</th><th>Value</th></tr></thead><tbody>' + 

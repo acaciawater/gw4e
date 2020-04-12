@@ -27,6 +27,7 @@ urlpatterns = [
     path('browse', BrowseView.as_view(),name='browse'),
     path('view', OverlayView.as_view(),name='view'),
     path('admin/', admin.site.urls),
+    path('ows/', include('ogc.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
     path('map/<int:pk>/toggle/', toggle,name='map-toggle'),
     path('map/<int:pk>/config/', get_map_config, name='map-config'),

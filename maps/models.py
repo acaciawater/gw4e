@@ -174,6 +174,7 @@ class Layer(MapsModel):
         returns options dict for Leaflet overlays
         '''
         ret = {
+            'service': self.layer.server.service_type,
             'url': self.layer.server.url,
             'version': self.layer.server.version,
             'layers': self.layer.layername,
@@ -184,24 +185,26 @@ class Layer(MapsModel):
             'clickable': self.clickable,
             'displayName': self.layer.title,
         }
-        if self.layer.tiled:
-            ret['tiled'] = True
         if self.properties:
             ret['propertyName'] = self.properties
-        if self.allow_download and self.download_url:
-            ret['downloadUrl'] = self.download_url
-        if self.stylesheet:
-            ret['stylesheet'] = self.stylesheet
-        if self.minzoom:
-            ret['minZoom'] = self.minzoom
-        if self.maxzoom:
-            ret['maxZoom'] = self.maxzoom
-        try:
-            ret['legend'] = self.layer.legend_url()
-            logger.debug(ret['legend'])
-        except Exception as e:
-            logger.error('Failed to retrieve legend url: %s' % e)
-            pass  # ret['legend'] = ''
+
+        if self.layer.server.service_type == 'WMS':
+            if self.allow_download and self.download_url:
+                ret['downloadUrl'] = self.download_url
+            if self.stylesheet:
+                ret['stylesheet'] = self.stylesheet
+            if self.minzoom:
+                ret['minZoom'] = self.minzoom
+            if self.maxzoom:
+                ret['maxZoom'] = self.maxzoom
+            if self.layer.tiled:
+                ret['tiled'] = True
+            try:
+                ret['legend'] = self.layer.legend_url()
+                logger.debug(ret['legend'])
+            except Exception as e:
+                logger.error('Failed to retrieve legend url: %s' % e)
+                pass  # ret['legend'] = ''
         return ret
 
     def __str__(self):
@@ -336,4 +339,4 @@ class Document(models.Model):
     
     class Meta:
         ordering = ('name',)
-    
+

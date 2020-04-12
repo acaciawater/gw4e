@@ -103,47 +103,91 @@ function sanitizeOptions(layer) {
 	}, {}) 
 }
 
-function createOverlay (map, layer) {
-  if (layer) {
-	const options = sanitizeOptions(layer)
-	const overlay = options.tiled? L.tileLayer.wms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
-    const id = overlayLayers.push(overlay) - 1
-    overlay.id = id
-    return overlay
-  }
-  return null
+/*
+let options = {
+        version: '1.0.0',
+        service: 'WFS',
+        request: 'GetFeature',
+        map: layer.map,
+        typename: layer.layer,
+        outputFormat: 'GeoJSON'
+      }
+      this.$http
+        .get(layer.url, { params: options })
+        .then(response => {
+          let layerStyle = layer.style
+          L.geoJSON(response.data, {
+            style: layer.style,
+            onEachFeature: (feature, layer) => {
+              layer.bindTooltip(feature.properties.NAME_LONG)
+              layer.on('mouseover', () => {
+                layer.setStyle({ color: 'red', weight: 3 })
+                layer.bringToFront()
+              })
+              layer.on('mouseout', () => {
+                layer.setStyle(layerStyle)
+              })
+            }
+          }).addTo(map)
+        })
+*/
+
+async function createOverlay (map, layer) {
+	if (layer.service == 'WMS') {
+		const options = sanitizeOptions(layer)
+		return options.tiled? L.tileLayer.wms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
+	} 
+	else if (layer.service == 'WFS') {
+		const options = {
+			service: layer.service,
+		    version: layer.version,
+		  	request: 'GetFeature',
+		  	typename: layer.layers,
+		  	outputformat: 'GeoJSON'
+		}
+		return $.getJSON(layer.url, options).then(response => {
+			const overlay = L.geoJSON(response, {
+				onEachFeature: (feature, layer) => {}
+			})
+			overlay.options = layer
+			overlay.wfsParams = options
+			return overlay
+		})
+	}
 }
 
 async function addOverlays (map, list, layers) {
   return Object.keys(layers).map(name => {
     const layer = layers[name]
-    const overlay = createOverlay(map, layer)
-    if (overlay) {
-    	const icon = layer.visible ? iconVisible : iconInvisible
-	    const id = overlay.id
-	    let item = `<li id=item_${id} class="list-group-item">
-	        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
-	        <span data-toggle="collapse" href="#legend_${id}">${name}</span><i id="status_${id}" class="float-right"></i>`
-	    if (layer.downloadUrl) {
-	      item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+    createOverlay(map, layer).then(overlay => {
+	    if (overlay) {
+	        const id = overlayLayers.push(overlay) - 1
+	        overlay.id = id
+	    	const icon = layer.visible ? iconVisible : iconInvisible
+			    let item = `<li id=item_${id} class="list-group-item">
+		        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
+		        <span data-toggle="collapse" href="#legend_${id}">${name}</span><i id="status_${id}" class="float-right"></i>`
+		    if (layer.downloadUrl) {
+		      item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+		    }
+		    item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+		    list.append(item)
+		
+		    const status = $(`#status_${id}`)
+		    overlay.on('loading',function(evt) {
+		      status.addClass(spinner)
+		    })
+		    overlay.on('load',function(evt) {
+		      status.removeClass(spinner)
+		    })
+		    overlay.on('error',function(evt) {
+		      status.removeClass(spinner)
+		    })
+		    if (layer.visible) {
+		      overlay.addTo(map)
+		    }
 	    }
-	    item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
-	    list.append(item)
-	
-	    const status = $(`#status_${id}`)
-	    overlay.on('loading',function(evt) {
-	      status.addClass(spinner)
-	    })
-	    overlay.on('load',function(evt) {
-	      status.removeClass(spinner)
-	    })
-	    overlay.on('error',function(evt) {
-	      status.removeClass(spinner)
-	    })
-	    if (layer.visible) {
-	      overlay.addTo(map)
-	    }
-    }
+    })
   })
 }
 

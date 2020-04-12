@@ -10,7 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from maps.forms import LayerPropertiesForm, SelectMapForm
 from maps.models import Group, UserConfig, \
     DocumentGroup, Document
-from wms.models import Layer as WMSLayer
+
+from ogc.models import Layer as OGCLayer
 
 from .models import Map, Layer
 
@@ -119,7 +120,7 @@ class LayerInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'layer':
-            kwargs['queryset'] = WMSLayer.objects.order_by('server__name','layername')
+            kwargs['queryset'] = OGCLayer.objects.order_by('server__name','layername')
         return admin.TabularInline.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
 @register(Map)
