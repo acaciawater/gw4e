@@ -55,7 +55,7 @@ async function addAllOverlays(groups, map, list) {
 		$(`#${groupId}`).sortable({
 			update: function(event,ui) {
 				// copy text of divs with a data-toggle attribute (displayName of layers) to array
-				const keys = $(this).find('div[data-toggle]').toArray().map(e => e.innerText);
+				const keys = $(this).find('span[data-toggle]').toArray().map(e => e.innerText);
 				console.debug(keys);
 				$.post('reorder/',JSON.stringify(keys)).then(()=> {
 					sortOverlays(overlayLayers,keys);
