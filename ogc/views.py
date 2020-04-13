@@ -23,10 +23,10 @@ def statistics(request, pk):
     layer = get_object_or_404(Layer, pk=pk)
     service = layer.server.service
     propertyname = request.GET.get('property','*')
-#     schema = get_schema(layer.server.url, layer.layername, version=layer.server.version)
     response = service.getfeature(typename=layer.layername,propertyname=propertyname,outputFormat='GeoJSON')
     data = json.loads(response.read())
     table = gpd.GeoDataFrame.from_features(data)
+    # pandas cannot describe geometries
     result = table.drop('geometry',axis=1).describe(include='all').to_json()
     return HttpResponse(result,content_type='application/json')
 

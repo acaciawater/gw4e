@@ -10,9 +10,9 @@ from ogc.models.legend import Range, Value, Legend
 
 @register(Layer)    
 class LayerAdmin(admin.ModelAdmin):
-    model = Layer
     list_display = ('server','title', 'layername')
-    list_filter = ('server',)
+    list_filter = ('server','server__service_type')
+    search_fields = ('layername','title')
 
 class LayerInline(admin.TabularInline):
     model = Layer
@@ -39,6 +39,8 @@ class ServerAdmin(admin.ModelAdmin):
     actions = ['updateLayers']
     inlines = [LayerInline]
     form = ServerForm
+    list_display = ('name','service_type',)
+    list_filter = ('service_type',)
     
     def updateLayers(self, request, queryset):
         numCreated = 0

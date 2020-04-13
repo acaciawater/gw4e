@@ -132,6 +132,7 @@ let options = {
         })
 */
 
+
 async function createOverlay (map, layer) {
 	if (layer.service == 'WMS') {
 		const options = sanitizeOptions(layer)
@@ -147,7 +148,17 @@ async function createOverlay (map, layer) {
 		}
 		return $.getJSON(layer.url, options).then(response => {
 			const overlay = L.geoJSON(response, {
-				onEachFeature: (feature, layer) => {}
+				onEachFeature: (feature, layer) => {},
+			    pointToLayer: (feature, latlng) => {
+			    	return L.circleMarker(latlng, {
+		    		    radius: 5,
+		    		    fillColor: 'red', //TODO: use legend
+		    		    color: 'white',
+		    		    weight: 1,
+		    		    opacity: 1,
+		    		    fillOpacity: 0.8
+		    		})
+			    }
 			})
 			overlay.options = layer
 			overlay.wfsParams = options
