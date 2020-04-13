@@ -8,12 +8,15 @@ $(function() {
 	// initialize the map
 	var map = L.map("map",{center:[10,40],zoom:4});
 	var osm = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 19,
+		maxZoom: 4,
+		minZoom: 4,
  		attribution: '&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a>'
 	})
 	
 	var stamen = L.tileLayer('http://tile.stamen.com/terrain/{z}/{x}/{y}.png', {
 	   attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.',
+		maxZoom: 5,
+		minZoom: 5,
 	})
 	stamen.addTo(map)
 	
@@ -35,7 +38,10 @@ $(function() {
               }
 		})
 		clusters.addTo(map)
-		map.fitBounds(clusters.getBounds())
+		const bounds = clusters.getBounds()
+		if (bounds.isValid()) {
+			map.fitBounds(bounds)
+		}
 	})
 })
 
