@@ -19,7 +19,8 @@ from .views import MapDetailView, HomeView
 from django.urls.conf import include
 from django.conf import settings
 from django.conf.urls.static import static
-from maps.views import map_proxy, toggle, reorder, get_map_config, docs2json, BrowseView, OverlayView
+from maps.views import map_proxy, toggle, reorder, docs2json, BrowseView, OverlayView,\
+    get_map
 
 urlpatterns = [
     path('', HomeView.as_view()),
@@ -29,8 +30,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('ows/', include('ogc.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
-    path('map/<int:map_id>/toggle/<int:lyr_id>', toggle,name='map-toggle'),
-    path('map/<int:pk>/config/', get_map_config, name='map-config'),
+    path('map/<int:mapid>/toggle/<int:layid>', toggle,name='map-toggle'),
+    path('map/<int:pk>/config/', get_map, name='map-config'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('map', map_proxy, name='cluster-view'),
     path('docs', docs2json),

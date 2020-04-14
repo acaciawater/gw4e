@@ -3,21 +3,18 @@ Created on May 20, 2019
 
 @author: theo
 '''
-import collections
 import json
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.urls.base import reverse
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from sorl.thumbnail import ImageField
 from ogc.models import Layer as OCGLayer
 
 import logging
+from django.db.utils import IntegrityError
 logger = logging.getLogger(__name__)
 
 class MapsModel(models.Model):
@@ -41,10 +38,64 @@ class MapsModel(models.Model):
 
 class Map(MapsModel):
     ''' Collection of map layers '''
-    slug = models.SlugField(help_text=_('Short name for map'), null=True)
-    name = models.CharField(_('name'), max_length=100, unique=True)
+    name = models.CharField(_('name'), max_length=100)
     bbox = models.CharField(_('extent'), max_length=100, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    
+    def clone(self, user):
+        ''' clone this map for a specific user '''
+        usermap = Map.objects.filter(name=self.name, user=user).first()
+        if usermap:
+            raise IntegrityError('Map already exists.')
+        
+        # query groups and evaluate queryset
+        groups = list(self.group_set.all())
 
+        # clone ourselves
+        usermap = self
+        usermap.pk = None
+        usermap.user = user
+        usermap.save()
+
+        # clone groups and layers
+        for group in groups:
+            # query layers and evaluate queryset
+            layers = list(group.layer_set.all())
+            group.pk = None
+            group.map = usermap
+            group.save()
+            for layer in layers:
+                layer.pk = None
+                layer.map = usermap
+                layer.group = group
+                layer.save()
+    
+        return usermap
+
+    def to_json(self):
+        ''' return json dict of groups with layers on the map. '''
+        def layers(group):
+            return [{'id': layer.id, 
+                     'index': index,
+                     'name': layer.layer.title,
+                     'url': layer.layer.server.url,
+                     'download_url': layer.download_url,
+                     'clickable': layer.clickable,
+#                      'stylesheet': layer.stylesheet,
+                     'visible': layer.visible,
+                     'legend': layer.layer.legend_url(),
+                     'options': layer.options()
+                     } 
+                    for index, layer in enumerate(group.layer_set.order_by('order'))]
+
+        return json.dumps({
+            'groups': [
+                    {'name': group.name, 
+                     'layers': layers(group)
+                    } for group in self.group_set.order_by('order')
+                ]
+            })
+    
     def get_extent(self):
         ''' compute and return map extent from layers '''
         map_extent = []
@@ -77,12 +128,6 @@ class Map(MapsModel):
     def get_absolute_url(self):
         return reverse('map-detail', args=[self.pk])
 
-
-@receiver(pre_save, sender=Map)
-def map_save(sender, **kwargs):
-    instance = sender
-    if instance.slug is None:
-        instance.slug = slugify(instance.name)
 
 class Group(models.Model):
     ''' Layer group '''
@@ -168,107 +213,6 @@ class Layer(MapsModel):
 
     def __str__(self):
         return '{}'.format(self.layer)
-
-class UserConfig(models.Model):
-    ''' User config (layer visibility and order) '''
-    user = models.ForeignKey(User, models.CASCADE, verbose_name=_('user'))
-    layer = models.ForeignKey(Layer, models.CASCADE, verbose_name=_('layer'))
-    order = models.SmallIntegerField(_('order'), default=0)
-    visible = models.BooleanField(default=True)
-
-    @classmethod
-    def sync(cls, user, map_instance):
-        ''' Synchronize user configuration with default map layers '''
-        if user.is_anonymous:
-            return 0;
-
-        layers = map_instance.layer_set.all()
-        # Delete configuration for layers that are not on the map anymore
-        cls.objects.filter(user=user, layer__map=map_instance).exclude(
-            layer__in=layers).delete()
-        # create missing config of map layers for this user
-        numcreated = 0
-        for layer in map_instance.layer_set.all():
-            _, created = cls.objects.get_or_create(user=user, layer=layer, defaults={
-                'order': layer.order, 'visible': layer.visible
-            })
-            if created:
-                numcreated += 1
-        return numcreated
-
-    @classmethod
-    def update(cls, user, map_instance):
-        ''' Update user configuration from default map layers. (This is a reset to default) '''
-        
-        if user.is_anonymous:
-            return 0;
-
-        layers = map_instance.layer_set.all()
-        # Delete configuration for layers that are not on the map anymore
-        cls.objects.filter(user=user, layer__map=map_instance).exclude(
-            layer__in=layers).delete()
-        # create missing config of map layers for this user
-        numcreated = 0
-        for layer in map_instance.layer_set.all():
-            _, created = cls.objects.update_or_create(user=user, layer=layer, defaults={
-                'order': layer.order, 'visible': layer.visible
-            })
-            if created:
-                numcreated += 1
-        return numcreated
-
-    @classmethod
-    def groups1(cls, user, map_instance):
-        ''' return json dict of groups with layers on the map. Layers are ordered by user's preference '''
-
-        groups = {}
-
-        def add(layer):
-            name = layer.group.name if layer.group else 'Layers'
-            if name not in groups:
-                groups[name] = collections.OrderedDict()
-            groups[name][layer.layer.title] = layer.options()
-
-        if user.is_anonymous:
-            # use default order and visibility
-            for layer in map_instance.layer_set.order_by('order'):
-                add(layer)
-        else:
-            # set visibility and order according to user's preference
-            for config in cls.objects.filter(user=user, layer__map=map_instance).order_by('order'):
-                layer = config.layer
-                layer.order = config.order
-                layer.visible = config.visible
-                add(layer)
-        return json.dumps(groups)
-
-    @classmethod
-    def groups(cls, user, map_instance):
-        ''' return json dict of groups with layers on the map. Layers are ordered by user's preference '''
-        def layers(group):
-            return [{'id': layer.id, 
-                     'index': index,
-                     'name': layer.layer.title,
-                     'url': layer.layer.server.url,
-                     'download_url': layer.download_url,
-                     'clickable': layer.clickable,
-#                      'stylesheet': layer.stylesheet,
-                     'visible': layer.visible,
-                     'legend': layer.layer.legend_url(),
-                     'options': layer.options()
-                     } 
-                    for index, layer in enumerate(group.layer_set.order_by('order'))]
-
-        group_query = map_instance.group_set.order_by('order')
-        groups = [{'name': group.name, 'layers': layers(group)} for group in group_query]
-        return json.dumps({'groups': groups})
-
-    def __str__(self):
-        return '{}:{}'.format(self.layer.map, self.layer.layer.title)
-
-    class Meta:
-        verbose_name = 'User Preference'
-        verbose_name_plural = 'User Preferences'
 
 
 class DocumentGroup(models.Model):

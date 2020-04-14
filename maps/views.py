@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 
-from .models import Map, UserConfig
+from .models import Map
 from maps.models import DocumentGroup, Layer
 from sorl.thumbnail.shortcuts import get_thumbnail
 
@@ -40,37 +40,38 @@ class MapDetailView(DetailView):
 @csrf_exempt
 #@login_required
 def reorder(request, pk):
-    ''' reorder layers in map and save to user config
+    ''' reorder layers in map
         request.body contains ids of layers as json array in proper order
     '''
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to reorder layers.', status=401)
-
-    user = request.user
-    target = get_object_or_404(Map, pk=pk)
+ 
+    usermap = get_object_or_404(Map, pk=pk, user=request.user) # add user to query to make user user owns the map
     layer_ids = json.loads(request.body.decode('utf-8'))
-
-    # make sure user config is in sync with map
-    # UserConfig.sync(user, target)
-    layer_config = user.userconfig_set.filter(layer__map=target)
-    for order, lid in enumerate(layer_ids):
-        conf = layer_config.get(layer__id=lid)
-        if conf.order != order:
-            conf.order = order
-            conf.save(update_fields=('order',))
+    for index, layid in enumerate(layer_ids):
+        try:
+            layer = usermap.layer_set.get(pk=layid) 
+        except Layer.DoesNotExist:
+            return HttpResponseNotFound('Layer with id={} not found in map {}'.format(layid, usermap))
+        if layer.order != index:
+            layer.order = index
+            layer.save(update_fields=('order',))
 
     return HttpResponse(status=200)
 
-
-
 @csrf_exempt
 #@login_required
-def toggle(request, map_id, lyr_id):
+def toggle(request, mapid, layid):
+    '''
+        Toggle visibility of a layer
+    '''
+    
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to toggle visibility of layers.', status=401)
-    config = request.user.userconfig_set.get(layer__map__id=map_id, layer__id=lyr_id)
-    config.visible = not config.visible
-    config.save(update_fields=('visible',))
+    
+    layer = get_object_or_404(Layer, pk=layid)
+    layer.visible = not layer.visible
+    layer.save(update_fields=('visible',))
     return HttpResponse(status=200)
     
 class HomeView(TemplateView):
@@ -84,7 +85,7 @@ class OverlayView(TemplateView):
 
 
 CLUSTERS = {
-    '0': 'Ethiopia', # only for admins
+    '0': 'Ethiopia', # only for admins?
     '1': 'Wag Himra',
     '2': 'Afar',
     '3': 'Siti',
@@ -102,17 +103,26 @@ def map_proxy(request):
     if not cluster:
         return HttpResponseNotFound('Cluster name or number is missing.')
     clustername = CLUSTERS[cluster] if cluster in '012345678' else cluster
-    map_object = get_object_or_404(Map, name__icontains=clustername)
-    return redirect('map-detail', pk=map_object.pk)
+    
+    map_query = Map.objects.filter(name__icontains=clustername)
+    if request.user is None or request.user.is_anonymous:
+        clustermap = map_query.filter(user__isnull=True).first()
+    else:
+        clustermap = map_query.filter(user=request.user).first()
+    if clustermap is None:
+        # try to clone a default map
+        defmap = Map.objects.filter(name_icontains=clustername,user__isnull=True)
+        if not defmap:
+            return HttpResponseNotFound(f'Map {clustername} not found for user {request.user}')
+        clustermap = defmap.clone(request.user)
+    return redirect('map-detail', pk=clustermap.pk)
 
 
 #@login_required
-def get_map_config(request, pk):
+def get_map(request, pk):
     ''' return user's layer configuration for all groups in the map '''
-    map_object = get_object_or_404(Map, pk=pk)
-    user = request.user
-    UserConfig.sync(user, map_object)
-    return HttpResponse(UserConfig.groups(user, map_object), content_type='application/json')
+    map_obj = get_object_or_404(Map, pk=pk)
+    return HttpResponse(map_obj.to_json(), content_type='application/json')
 
 #@login_required
 def docs2json(request):

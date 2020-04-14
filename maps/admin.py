@@ -3,17 +3,15 @@ from django.contrib import messages
 from django.contrib.admin.decorators import register
 from django.db.models import Max
 from django.db.models.fields import TextField
+from django.db.utils import IntegrityError
 from django.forms.widgets import Textarea
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 
-from maps.forms import LayerPropertiesForm, SelectMapForm
-from maps.models import Group, UserConfig, \
-    DocumentGroup, Document
-
 from ogc.models import Layer as OGCLayer
 
-from .models import Map, Layer
+from .forms import LayerPropertiesForm, SelectMapForm
+from .models import Map, Layer, Group, DocumentGroup, Document
 
 
 admin.site.site_header = 'GW4E Administration'
@@ -125,9 +123,11 @@ class LayerInline(admin.TabularInline):
 
 @register(Map)
 class MapAdmin(admin.ModelAdmin):
+    list_display = ('name','user')
+    list_filter = ('user',)
+    search_fields = ('name',)
     inlines = [LayerInline]
-    exclude = ['slug']
-    actions = ['update_extent', 'create_user_config']
+    actions = ['update_extent', 'clone_map']
 
     def update_extent(self, request, queryset):
         count = 0
@@ -135,25 +135,25 @@ class MapAdmin(admin.ModelAdmin):
             instance.set_extent()
             count += 1
         messages.success(request, '{} extents were updated successfully.'.format(count))
-
-    def create_user_config(self, request, queryset):
-        mapcount = 0
-        layercount = 0
+    
+    update_extent.short_description = _('Update extent of selected maps')
+    
+    def clone_map(self, request, queryset):
+        success = 0
+        errors = 0
         for instance in queryset:
-            layercount += UserConfig.update(request.user, instance)
-            mapcount += 1
-        if layercount == 0:
-            messages.warning(request, 'No layers were created from {} maps.'.format(mapcount))
-        else:
-            messages.success(request, '{} layers were created successfully from {} maps.'.format(layercount, mapcount))
-
-
-@register(UserConfig)
-class UserConfigAdmin(admin.ModelAdmin):
-    list_filter = ('user', 'layer__map')
-    list_display = ('layer', 'user', 'order', 'visible')
-
-
+            try:
+                instance.clone(request.user)
+                success += 1
+            except IntegrityError:
+                errors += 1
+        if success:
+            messages.success(request, '{} maps were cloned successfully for user {}.'.format(success, request.user))
+        if errors:
+            messages.error(request, '{} maps already exist for user {}.'.format(errors, request.user))
+    
+    clone_map.short_description=_('Clone selected maps for current user')
+                
 class DocumentInline(admin.TabularInline):
     model = Document
     formfield_overrides = {TextField: {'widget': Textarea(attrs={'rows':1})}}
