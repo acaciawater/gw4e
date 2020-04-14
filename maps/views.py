@@ -111,7 +111,7 @@ def map_proxy(request):
         clustermap = map_query.filter(user=request.user).first()
     if clustermap is None:
         # try to clone a default map
-        defmap = Map.objects.filter(name_icontains=clustername,user__isnull=True)
+        defmap = Map.objects.filter(name__icontains=clustername,user__isnull=True)
         if not defmap:
             return HttpResponseNotFound(f'Map {clustername} not found for user {request.user}')
         clustermap = defmap.clone(request.user)
