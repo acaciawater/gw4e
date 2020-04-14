@@ -45,33 +45,6 @@ class Map(MapsModel):
     name = models.CharField(_('name'), max_length=100, unique=True)
     bbox = models.CharField(_('extent'), max_length=100, null=True, blank=True)
 
-    def layers(self):
-        ''' return ordered json dictionary of all layers using wms title as key '''
-        retval = collections.OrderedDict()
-        for layer in self.layer_set.order_by('order'):
-            retval[layer.layer.title] = layer.options()
-        return json.dumps(retval)
-
-    def groups(self):
-        ''' return json dictionary of groups with group name as key
-        and ordered dictionary of layers as values '''
-        groups = {}
-
-        # Add ungrouped layers with default group name 'Layers'
-        ungrouped = self.layer_set.filter(group__isnull=True).order_by('order')
-        if ungrouped:
-            groups['Layers'] = collections.OrderedDict()
-            for layer in ungrouped:
-                groups['Layers'][layer.layer.title] = layer.options()
-
-        # add all groups and layers
-        for group in self.group_set.order_by('name'):
-            groups[group.name] = collections.OrderedDict()
-            for layer in group.layer_set.order_by('order'):
-                groups[group.name][layer.layer.title] = layer.options()
-
-        return json.dumps(groups)
-
     def get_extent(self):
         ''' compute and return map extent from layers '''
         map_extent = []
@@ -115,7 +88,8 @@ class Group(models.Model):
     ''' Layer group '''
     name = models.CharField(_('group'), max_length=100)
     map = models.ForeignKey(Map, on_delete=models.CASCADE)
-
+    order = models.SmallIntegerField(_('order'), default=1)
+    
     def layer_count(self):
         return self.layer_set.count()
 
@@ -137,7 +111,7 @@ class Layer(MapsModel):
     layer = models.ForeignKey(OCGLayer, models.CASCADE, null=True)
     group = models.ForeignKey(Group, models.SET_NULL,
                               blank=True, null=True, verbose_name=_('group'))
-    order = models.SmallIntegerField(_('order'))
+    order = models.SmallIntegerField(_('order'),default=1)
     visible = models.BooleanField(_('visible'), default=True)
     visible.boolean = True
     format = models.CharField(_('format'), max_length=50, default='image/png')
@@ -175,41 +149,25 @@ class Layer(MapsModel):
         '''
         ret = {
             'service': self.layer.server.service_type,
-            'url': self.layer.server.url,
             'version': self.layer.server.version,
             'layers': self.layer.layername,
             'format': self.format,
-            'visible': self.visible,
             'transparent': self.transparent,
             'opacity': float(self.opacity),
-            'clickable': self.clickable,
-            'displayName': self.layer.title,
         }
         if self.properties:
             ret['propertyName'] = self.properties
-
         if self.layer.server.service_type == 'WMS':
-            if self.allow_download and self.download_url:
-                ret['downloadUrl'] = self.download_url
-            if self.stylesheet:
-                ret['stylesheet'] = self.stylesheet
             if self.minzoom:
                 ret['minZoom'] = self.minzoom
             if self.maxzoom:
                 ret['maxZoom'] = self.maxzoom
             if self.layer.tiled:
                 ret['tiled'] = True
-            try:
-                ret['legend'] = self.layer.legend_url()
-                logger.debug(ret['legend'])
-            except Exception as e:
-                logger.error('Failed to retrieve legend url: %s' % e)
-                pass  # ret['legend'] = ''
         return ret
 
     def __str__(self):
         return '{}'.format(self.layer)
-
 
 class UserConfig(models.Model):
     ''' User config (layer visibility and order) '''
@@ -260,7 +218,7 @@ class UserConfig(models.Model):
         return numcreated
 
     @classmethod
-    def groups(cls, user, map_instance):
+    def groups1(cls, user, map_instance):
         ''' return json dict of groups with layers on the map. Layers are ordered by user's preference '''
 
         groups = {}
@@ -283,6 +241,27 @@ class UserConfig(models.Model):
                 layer.visible = config.visible
                 add(layer)
         return json.dumps(groups)
+
+    @classmethod
+    def groups(cls, user, map_instance):
+        ''' return json dict of groups with layers on the map. Layers are ordered by user's preference '''
+        def layers(group):
+            return [{'id': layer.id, 
+                     'index': index,
+                     'name': layer.layer.title,
+                     'url': layer.layer.server.url,
+                     'download_url': layer.download_url,
+                     'clickable': layer.clickable,
+#                      'stylesheet': layer.stylesheet,
+                     'visible': layer.visible,
+                     'legend': layer.layer.legend_url(),
+                     'options': layer.options()
+                     } 
+                    for index, layer in enumerate(group.layer_set.order_by('order'))]
+
+        group_query = map_instance.group_set.order_by('order')
+        groups = [{'name': group.name, 'layers': layers(group)} for group in group_query]
+        return json.dumps({'groups': groups})
 
     def __str__(self):
         return '{}:{}'.format(self.layer.map, self.layer.layer.title)

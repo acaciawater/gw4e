@@ -23,8 +23,14 @@ class Layer(models.Model):
         self.save(update_fields=('legend',))
         return url
     
+    def _try_update_legend(self, style='default'):
+        try:
+            return self._update_legend(style)
+        except:
+            return self.legend
+        
     def legend_url(self, style='default'):
-        return self._update_legend(style) if self.legend is None else self.legend
+        return self._try_update_legend(style) if self.legend is None else self.legend
     # ---------------------------------------------------------------------------
     
     def __str__(self):

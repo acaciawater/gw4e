@@ -45,35 +45,31 @@ var overlayLayers = []
 const iconVisible = 'far fa-check-square'
 const iconInvisible = 'far fa-square'
 const spinner = 'fas fa-spinner fa-spin'
+const warning = 'fas fa-exclamation'
 
-
-function reorderOverlays (layers) {
+function reorderOverlays (overlays) {
   // show layers in proper order on map
-  layers.forEach(layer => {
-    if (layer.options.visible) {
-      layer.bringToFront()
+  overlays.forEach(overlay => {
+    if (overlay.layerDefn.visible) {
+      overlay.bringToFront()
     }
   })
 }
 
-function sortOverlays (layers, keys) {
-  // sort overlay layers by displayName using ordered array keys and display on map
-  reorderOverlays(layers.sort((a, b) => {
-    const indexA = keys.indexOf(a.options.displayName)
-    const indexB = keys.indexOf(b.options.displayName)
-    return indexA > indexB ? 1 : indexA < indexB ? -1 : 0
-  }))
+function sortOverlays(overlays, order) {
+	const ordered = order.map(id => overlays.find(o => o.layerDefn.id == id))
+	reorderOverlays(ordered)
+	return ordered
 }
 
-function toggleLayer (event) {
+function toggleLayer (event, id) {
   const icon = event.target
-  const legend = $(icon).next()
-  const name = legend.text()
-  const layer = overlayLayers.find(o => o.options.displayName === name)
+  const overlay = overlayLayers.find(o => o.layerDefn.id === id)
+  const layer = overlay.layerDefn
   const parent = $(icon).parent()
-  if (layer.options.visible) {
-    theMap.removeLayer(layer)
-    layer.options.visible = false
+  if (theMap.hasLayer(overlay)) {
+    theMap.removeLayer(overlay)
+    layer.visible = false
     icon.className = icon.className.replace(iconVisible, iconInvisible)
     const col = parent.find('.collapse')
     col.collapse('hide')
@@ -81,69 +77,26 @@ function toggleLayer (event) {
 	$(`#status_${layer.id}`).removeClass(spinner)
 
   } else {
-    theMap.addLayer(layer)
-    layer.options.visible = true
+    theMap.addLayer(overlay)
+    layer.visible = true
     icon.className = icon.className.replace(iconInvisible, iconVisible)
     const col = parent.find('.collapse')
     col.collapse('show')
   }
-  reorderOverlays(overlayLayers)
   // inform backend about visibility change
-  $.post('toggle/', JSON.stringify([name]))
+  $.post(`toggle/${id}`)
 }
-
-function sanitizeOptions(layer) {
-	const except = ['legend','url','downloadUrl','stylesheet']
-	return Object.entries(layer).reduce((obj, item) => {
-		const [key, value] = item
-		if (!except.includes(key)) {
-			obj[key]=value
-		}
-		return obj
-	}, {}) 
-}
-
-/*
-let options = {
-        version: '1.0.0',
-        service: 'WFS',
-        request: 'GetFeature',
-        map: layer.map,
-        typename: layer.layer,
-        outputFormat: 'GeoJSON'
-      }
-      this.$http
-        .get(layer.url, { params: options })
-        .then(response => {
-          let layerStyle = layer.style
-          L.geoJSON(response.data, {
-            style: layer.style,
-            onEachFeature: (feature, layer) => {
-              layer.bindTooltip(feature.properties.NAME_LONG)
-              layer.on('mouseover', () => {
-                layer.setStyle({ color: 'red', weight: 3 })
-                layer.bringToFront()
-              })
-              layer.on('mouseout', () => {
-                layer.setStyle(layerStyle)
-              })
-            }
-          }).addTo(map)
-        })
-*/
-
 
 async function createOverlay (map, layer) {
-	if (layer.service == 'WMS') {
-		const options = sanitizeOptions(layer)
-		return options.tiled? L.tileLayer.wms(layer.url, options): L.nonTiledLayer.wms(layer.url, options)
+	if (layer.options.service == 'WMS') {
+		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
 	} 
-	else if (layer.service == 'WFS') {
+	else if (layer.options.service == 'WFS') {
 		const options = {
-			service: layer.service,
-		    version: layer.version,
+			service: layer.options.service,
+		    version: layer.options.version,
 		  	request: 'GetFeature',
-		  	typename: layer.layers,
+		  	typename: layer.options.layers,
 		  	outputformat: 'GeoJSON'
 		}
 		return $.getJSON(layer.url, options).then(response => {
@@ -160,7 +113,6 @@ async function createOverlay (map, layer) {
 		    		})
 			    }
 			})
-			overlay.options = layer
 			overlay.wfsParams = options
 			return overlay
 		})
@@ -168,31 +120,36 @@ async function createOverlay (map, layer) {
 }
 
 async function addOverlays (map, list, layers) {
-  return Object.keys(layers).map(name => {
-    const layer = layers[name]
+  return layers.forEach(layer => {
     createOverlay(map, layer).then(overlay => {
 	    if (overlay) {
 	        const id = overlayLayers.push(overlay) - 1
-	        overlay.id = id
+	        // save layer definition for easy reference
+		    overlay.layerDefn = layer
 	    	const icon = layer.visible ? iconVisible : iconInvisible
-			    let item = `<li id=item_${id} class="list-group-item">
-		        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event)"></i>
-		        <span data-toggle="collapse" href="#legend_${id}">${name}</span><i id="status_${id}" class="float-right"></i>`
+		    let item = `<li id=layer_${layer.id} class="list-group-item py-1">
+		        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event, ${layer.id})"></i>
+		        <span data-toggle="collapse" href="#legend_${id}">${layer.name}</span><i id="status_${id}" class="float-right"></i>`
 		    if (layer.downloadUrl) {
 		      item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
 		    }
-		    item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+		    if (layer.legend) {
+		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+		    }
 		    list.append(item)
 		
 		    const status = $(`#status_${id}`)
 		    overlay.on('loading',function(evt) {
+			  status.removeClass(warning)
 		      status.addClass(spinner)
 		    })
 		    overlay.on('load',function(evt) {
 		      status.removeClass(spinner)
+		      status.removeClass(warning)
 		    })
 		    overlay.on('error',function(evt) {
 		      status.removeClass(spinner)
+		      status.addClass(warning)
 		    })
 		    if (layer.visible) {
 		      overlay.addTo(map)

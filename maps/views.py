@@ -15,7 +15,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 
 from .models import Map, UserConfig
-from maps.models import DocumentGroup
+from maps.models import DocumentGroup, Layer
 from sorl.thumbnail.shortcuts import get_thumbnail
 
 
@@ -30,7 +30,7 @@ class MapDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = TemplateView.get_context_data(self, **kwargs)
         context['api_key'] = settings.GOOGLE_MAPS_API_KEY
-        context['options'] = {'zoom': 12, 'center': [52, 5]}
+        context['options'] = {'zoom': 12, 'center': [52, 5], 'minZoom': 4}
         map_object = self.get_map()
         context['map'] = map_object
         context['extent'] = map_object.extent()
@@ -41,55 +41,38 @@ class MapDetailView(DetailView):
 #@login_required
 def reorder(request, pk):
     ''' reorder layers in map and save to user config
-        request.body contains names of layers as json array in proper order
-        is something like ["suitability","ndvi",,...]
+        request.body contains ids of layers as json array in proper order
     '''
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to reorder layers.', status=401)
 
     user = request.user
     target = get_object_or_404(Map, pk=pk)
-    items = json.loads(request.body.decode('utf-8'))
+    layer_ids = json.loads(request.body.decode('utf-8'))
 
     # make sure user config is in sync with map
-    UserConfig.sync(user, target)
-
-    for index, item in enumerate(items):
-        config = user.userconfig_set.get(
-            layer__map=target, layer__layer__title=item)
-        if config.order != index:
-            config.order = index
-            config.save(update_fields=('order',))
+    # UserConfig.sync(user, target)
+    layer_config = user.userconfig_set.filter(layer__map=target)
+    for order, lid in enumerate(layer_ids):
+        conf = layer_config.get(layer__id=lid)
+        if conf.order != order:
+            conf.order = order
+            conf.save(update_fields=('order',))
 
     return HttpResponse(status=200)
+
 
 
 @csrf_exempt
 #@login_required
-def toggle(request, pk):
-    ''' toggle visibility of layers in map and save to user config
-        request.body contains names of layers as json array in proper order
-        is something like ["suitability","ndvi",,...]
-    '''
+def toggle(request, map_id, lyr_id):
     if not request.user.is_authenticated:
         return HttpResponse('Authentication required to toggle visibility of layers.', status=401)
-
-    user = request.user
-    target = get_object_or_404(Map, pk=pk)
-    items = json.loads(request.body.decode('utf-8'))
-
-    # make sure user config is in sync with map
-    UserConfig.sync(user, target)
-
-    for item in items:
-        config = user.userconfig_set.get(
-            layer__map=target, layer__layer__title=item)
-        config.visible = not config.visible
-        config.save(update_fields=('visible',))
-
+    config = request.user.userconfig_set.get(layer__map__id=map_id, layer__id=lyr_id)
+    config.visible = not config.visible
+    config.save(update_fields=('visible',))
     return HttpResponse(status=200)
-
-
+    
 class HomeView(TemplateView):
     template_name = 'home.html'
 

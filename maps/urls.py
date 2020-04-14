@@ -29,7 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('ows/', include('ogc.urls')),
     path('map/<int:pk>/reorder/', reorder,name='map-reorder'),
-    path('map/<int:pk>/toggle/', toggle,name='map-toggle'),
+    path('map/<int:map_id>/toggle/<int:lyr_id>', toggle,name='map-toggle'),
     path('map/<int:pk>/config/', get_map_config, name='map-config'),
     path('map/<int:pk>/', MapDetailView.as_view(),name='map-detail'),
     path('map', map_proxy, name='cluster-view'),

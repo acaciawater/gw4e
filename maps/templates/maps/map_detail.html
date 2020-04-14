@@ -40,29 +40,30 @@ function getCookie(cookie) {
 
 /***
  * returns array of promises (one for every group) that resolve when layers in the group have been loaded
+ * TODO: no async needed: async loading is handled by leaflet
  */
 async function addAllOverlays(groups, map, list) {
 	let id = 0;
-	return Object.keys(groups).map(name => {
-		const layers = groups[name]
+	return groups.forEach(group => {
 		const groupId = `group${id++}`;
-		let item = `<a class="list-group-item list-group-item-secondary" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
-		<i class="fas pr-3 fa-layer-group"></i><strong>${name}</strong></a>
+		let item = `<a class="list-group-item list-group-item-secondary py-1" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
+		<i class="fas pr-3 fa-layer-group"></i><strong>${group.name}</strong></a>
 		<div class="collapse show" id="${groupId}"></div>`;
 		list.append(item);
 
 		// Allow user to sort layers in group list
 		$(`#${groupId}`).sortable({
 			update: function(event,ui) {
-				// copy text of divs with a data-toggle attribute (displayName of layers) to array
-				const keys = $(this).find('span[data-toggle]').toArray().map(e => e.innerText);
-				console.debug(keys);
-				$.post('reorder/',JSON.stringify(keys)).then(()=> {
-					sortOverlays(overlayLayers,keys);
-				});
+				// get (integer) indices of overlays
+				const ids = $(list).find('li[id^="layer_"]').toArray().map(e => parseInt(e.id.split('_')[1]))
+				console.debug(ids)
+				sortOverlays(overlayLayers, ids)
+				const names = overlayLayers.map(o => o.layerDefn.name)
+				console.debug(names)
+				$.post('reorder/',JSON.stringify(ids))
 			}
 		});
-		return addOverlays(map, $(`#${groupId}`), layers)
+		return addOverlays(map, $(`#${groupId}`), group.layers)
 	});
 }
 
@@ -118,8 +119,8 @@ $(function() {
 	// load overlays
 	const list = $("#list");
 	overlayLayers = [];
-	$.getJSON('/map/{{map.pk}}/config/').then(groups => {
-		addAllOverlays(groups, map, list).then(() => {
+	$.getJSON('/map/{{map.pk}}/config/').then(response => {
+		addAllOverlays(response.groups, map, list).then(() => {
 			map.on('click', evt => {
 				// query all visible wms layers
 				getFeatureInfo(evt).then(info => {
@@ -169,6 +170,12 @@ body, .outer {
 #listwrapper {
   overflow-y: scroll
 }
+
+.list-group-item {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 </style>
 {% endblock %}
 {% block header %}
