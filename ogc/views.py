@@ -49,3 +49,19 @@ def layers(request, pk):
             'version': server.version,
             'layers': layers
         }})
+
+def legends(request, pk):
+    ''' return layer's legends '''
+    def to_json(legend):
+        return {
+            'id': legend.id,
+            'title': legend.title,
+            'property': legend.property,
+            'levels': [{'label': r.label, 'color': r.color, 'lo': r.lo, 'hi': r.hi} 
+                       for r in legend.range_set.order_by('lo')],
+            'classes': [{'label': v.label, 'color': v.color, 'value': v.value} 
+                       for v in legend.value_set.order_by('value')]
+        }
+    layer = get_object_or_404(Layer, pk=pk)
+    legends = [to_json(legend) for legend in layer.legends.all()]
+    return JsonResponse({'layer': {'id': layer.id, 'name': layer.layername}, 'legends': legends})

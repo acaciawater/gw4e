@@ -14,10 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import properties, layers, statistics
+from .views import properties, layers, statistics, legends
 
 urlpatterns = [
     path('props/<int:pk>', properties, name='wfs-properties'),
     path('layers/<int:pk>', layers, name='wfs-layers'),
+    path('legends/<int:pk>', legends, name='wfs-legends'),
     path('stats/<int:pk>', statistics, name='wfs-statistics'),
 ]

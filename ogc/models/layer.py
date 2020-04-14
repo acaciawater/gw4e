@@ -6,7 +6,7 @@ class Layer(models.Model):
     ''' Layer in an OWS server '''
     layername = models.CharField(_('layername'), max_length=100)
     title = models.CharField(_('title'), max_length=100)
-    server = models.ForeignKey(Server,models.CASCADE,verbose_name=_('WMS Server'))
+    server = models.ForeignKey(Server,models.CASCADE,verbose_name=_('server'))
     bbox = models.CharField(_('extent'),max_length=100,null=True,blank=True)
     attribution = models.CharField(_('attribution'),max_length=200,blank=True,null=True)
 

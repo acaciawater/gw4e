@@ -7,13 +7,17 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.forms.widgets import TextInput, Select
 from ogc.models.legend import Range, Value, Legend
+from django.contrib.admin.filters import SimpleListFilter
+from owslib.feature.schema import get_schema
+from ogc.actions import classify, create_legends
 
 @register(Layer)    
 class LayerAdmin(admin.ModelAdmin):
     list_display = ('server','title', 'layername')
     list_filter = ('server','server__service_type')
     search_fields = ('layername','title')
-
+    actions=[create_legends]
+    
 class LayerInline(admin.TabularInline):
     model = Layer
     extra = 0
@@ -74,17 +78,39 @@ class LegendForm(ModelForm):
     class Meta:
         model = Legend
         exclude = []
-        widgets = {
-            'property': Select
-            }
+        
+    def __init__(self, *args, **kwargs):
+        super(LegendForm, self).__init__(*args, **kwargs)
+        choices = ((None,'--------'),('select','select'))
+        if self.instance is not None and hasattr(self.instance,'layer'):
+            layer = self.instance.layer
+            properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
+            if properties:
+                choices = ((prop,prop) for prop in properties.keys())
+        self.fields['property'].widget = Select(choices=choices)    
+        
+class WFS_server_filter(SimpleListFilter):
+    title = 'WFS-Server'
+    parameter_name = 'layer'
     
+    def lookups(self, request, model_admin):
+        servers = Server.objects.filter(service_type='WFS')
+        return ((s.pk,s.name) for s in servers)
+
+    def queryset(self, request, queryset):
+        return queryset.filter(layer__server=self.value())
+        
 @register(Legend)
 class LegendAdmin(admin.ModelAdmin):
     list_display = ('title', 'property', 'layer')
-    list_filter = ('layer', 'layer__server')
+    list_filter = ('layer','layer__server',)
     search_fields = ('title', 'property', 'layer__layername', 'layer__title')
     inlines = [RangeInline, ValueInline]
     form = LegendForm
-       
+    actions = [classify]
+    
+    def get_queryset(self, request):
+        return Legend.objects.filter(layer__server__service_type='WFS')
+    
     class Media:
         js = ('js/wfsproperties.js',)

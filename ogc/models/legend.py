@@ -2,6 +2,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from colorsys import hsv_to_rgb
 from ogc.models.layer import Layer
+import json
+import pandas as pd
 
 def hsv2hex(h,s=1,v=1):
     h = 0.6667 * (1.0 - h) # reverse colors and clip at 245 degrees (blue)
@@ -29,44 +31,48 @@ class Legend(models.Model):
                     return {self.property: {'value': value, 'color': entry.color, 'label': entry.label}}
         raise ValueError(f'No legend entry found for {self.property}={value}')
 
-#     @classmethod
-#     def classify(cls, app_label, model_name, property_name):
-#         ''' create default legend for app.model.property '''
-#         title = ' '.join(re.split(r'\.|_{2}',property_name)).title()
-#         legend, _created = cls.objects.get_or_create(app=app_label, model=model_name, prop=property_name, defaults = {'title':title})
-#         values = get_model_property_values(app_label, model_name, property_name)
-#         index, data = zip(*values)
-#         series = pd.Series(index=index, data=data).dropna()
-# 
-#         if series.size > 1:
-#             try:
-#                 # try to classify numeric values (or dates) first
-#                 q = series.quantile([0,0.2,0.4,0.6,0.8,1.0])
-#                 limits = q.values
-#                 lo = limits[0]
-#                 limits = limits[1:]
-#                 legend.range_set.all().delete()
-#                 for index, hi in enumerate(limits):
-#                     color = hsv2hex(float(index) / float(len(limits)-1))
-#                     legend.range_set.create(lo=lo, hi=hi, color=color, label = '%g - %g' % (lo,hi))
-#                     lo = hi
-#             except:
-#                 # probably text
-#                 series = series.unique()
-#                 if series.size > 1:
-#                     if series.size > 20:
-#                         raise ValueError('Too many values to classify')
-#                     legend.value_set.all().delete()
-#                     for index, value in enumerate(series):
-#                         color = hsv2hex(float(index) / float(series.size-1))
-#                         legend.value_set.create(value=value, color = color, label = str(value))
-# 
-#         return legend
+    def get_features(self):
+        import geopandas as gpd
+        service = self.layer.server.service
+        response = service.getfeature(typename=self.layer.layername,propertyname=self.property,outputFormat='GeoJSON')
+        data = json.loads(response.read())
+        return gpd.GeoDataFrame.from_features(data)
+    
+    def create_default(self, series=None):
+        ''' create a default legend '''
+        if series is None:
+            values = self.get_features()[self.property]
+            series = values.dropna()
+            
+        if series.size > 1:
+            from pandas.api.types import is_numeric_dtype
+            if is_numeric_dtype(series):
+                # try to classify numeric values (or dates) first
+                q = series.quantile([0,0.2,0.4,0.6,0.8,1.0])
+                limits = q.values
+                lo = limits[0]
+                limits = limits[1:]
+                self.range_set.all().delete()
+                for index, hi in enumerate(limits):
+                    color = hsv2hex(float(index) / float(len(limits)-1))
+                    self.range_set.create(lo=lo, hi=hi, color=color, label = '%g - %g' % (lo,hi))
+                    lo = hi
+            else:
+                series = series.unique()
+                if series.size > 1:
+                    if series.size > 24:
+                        raise ValueError(f'{self.layer}:{self.property} is not numeric and has too many unique values to classify')
+                    self.value_set.all().delete()
+                    for index, value in enumerate(series):
+                        if not pd.isnull(value):
+                            color = hsv2hex(float(index) / float(series.size-1))
+                            self.value_set.create(value=value[:40], color = color, label = str(value))
+ 
     
 class Entry(models.Model):
     legend = models.ForeignKey(Legend,on_delete=models.CASCADE)
     color = models.CharField(max_length=20)    
-    label = models.CharField(max_length=40,null=True,blank=True)
+    label = models.CharField(max_length=80,null=True,blank=True)
 
     class Meta:
         abstract = True
