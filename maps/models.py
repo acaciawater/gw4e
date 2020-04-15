@@ -77,6 +77,7 @@ class Map(MapsModel):
         def layers(group):
             return [{'id': layer.id, 
                      'index': index,
+                     'layer_id': layer.layer.id,
                      'name': layer.layer.title,
                      'url': layer.layer.server.url,
                      'download_url': layer.download_url,

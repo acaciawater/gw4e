@@ -100,6 +100,28 @@ async function createOverlay (map, layer) {
 		  	outputformat: 'GeoJSON'
 		}
 		return $.getJSON(layer.url, options).then(response => {
+			const wfs = new WFSLayer()
+			const overlay = wfs.createLayer(response)
+			overlay.wfsParams = options
+			wfs.loadLegend(`/ows/legends/${layer.layer_id}`)
+			return overlay
+		})
+	}
+}
+
+async function createOverlay_old (map, layer) {
+	if (layer.options.service == 'WMS') {
+		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
+	} 
+	else if (layer.options.service == 'WFS') {
+		const options = {
+			service: layer.options.service,
+		    version: layer.options.version,
+		  	request: 'GetFeature',
+		  	typename: layer.options.layers,
+		  	outputformat: 'GeoJSON'
+		}
+		return $.getJSON(layer.url, options).then(response => {
 			const overlay = L.geoJSON(response, {
 				onEachFeature: (feature, layer) => {},
 			    pointToLayer: (feature, latlng) => {

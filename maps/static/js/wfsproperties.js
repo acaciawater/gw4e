@@ -1,5 +1,5 @@
 /**
- * Update server versions when selected server type
+ * Update property selector when selected layer changes
  */
 (function($) {
 	$(document).ready(function() {
