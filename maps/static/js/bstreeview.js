@@ -150,8 +150,9 @@
                 // Build child nodes.
                 if (node.nodes) {
                     // Node group item.
-                    var treeGroup = $(templates.treeviewGroupItem)
-                        .attr("id", _this.itemIdPrefix + node.nodeId);
+                    var treeGroup = $(templates.treeviewGroupItem).attr("id", _this.itemIdPrefix + node.nodeId);
+                    if (node.state == 'open')
+                    	treeGroup.addClass('open')
                     parentElement.append(treeGroup);
                     _this.build(treeGroup, node.nodes, depth);
                 }

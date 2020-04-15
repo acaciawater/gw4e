@@ -134,6 +134,7 @@ def docs2json(request):
         data = {
             'id': group.id,
             'name': group.name,
+            'state': 'open' if group.open else 'closed',
             'documents': process_docs(cluster, group),
             'folders': []
         }

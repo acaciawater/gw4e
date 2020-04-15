@@ -45,7 +45,7 @@ h2,h3 {
 <div class="container">
 <div class="content">
 <h2 class="text-center">Groundwater Mapping<br>for Climate Resilient WASH in Ethiopia</h2>	
-<h3 class="text-center">Documents</h3>
+<h3 class="text-center">Reports and maps</h3>
 <hr/>
 <div class="row row-fluid">
 <div class="col col-3">
@@ -89,6 +89,7 @@ function getTreeData(url) {
 		return group.folders.map(folder => {
 			return {
 				text: folder.name,
+				state: folder.state,
 				nodes: [...getDocs(folder), ...getGroup(folder)]
 			}
 		})
@@ -121,6 +122,7 @@ function loadTree(cluster) {
 	}
 	getTreeData(url).then(tree => {
 		$("#tree1").bstreeview({data: tree})
+		$("#tree1 .open").collapse('show').removeClass('open')
 		const items = $("#tree1 .list-group-item") 
 		items.on("mouseleave", function() {
 			clearPreviewTimer()
