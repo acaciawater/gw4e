@@ -25,6 +25,11 @@ html, body {
   color: #555;
 }
 
+/* extra small font size for legends */
+.fa-xxs {
+	font-size: 0.5rem;
+}
+
 .leaflet-popup-content-wrapper {
   background: rgba(240, 250, 255, 0.9);
 }

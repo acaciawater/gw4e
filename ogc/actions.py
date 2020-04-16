@@ -28,6 +28,42 @@ def create_legends(modeladmin, request, queryset):
             service = layer.server.service
             response = service.getfeature(typename=layer.layername,outputFormat='GeoJSON')
             data = json.loads(response.read())
+            
+            # geopandas does not like points without (complete) coordinates
+            def has_coords(feature):
+                geom = feature.get('geometry')
+                if geom:
+                    coords = geom.get('coordinates')
+                    if coords:
+                        return isinstance(coords,list) and len(coords)>1 and all(coords)
+                return False
+            data['features'] = filter(has_coords, data['features'])
+            
+            features = gpd.GeoDataFrame.from_features(data)
+            exclude = ['geometry','fid','ogc_fid','no','nr','id','sn', 'x','y','adindanx','adindany','remarks','remark','lon','lat','longitude','latitude','easting','northing']
+            for name, series in features.iteritems():
+                if name.lower() not in exclude:
+                    legend, _created = layer.legends.get_or_create(title=name, property=name)
+                    try:
+                        legend.create_default(series)
+                    except Exception as e:
+                        messages.error(request, e)
+                    num_created += 1
+        except Exception as e:
+            messages.error(request, e)
+    messages.success(request, f'{num_created} legends created')
+    
+create_legends.short_description = 'Create default legends'
+
+def create_legends_old(modeladmin, request, queryset):
+    ''' create default WFS legends for all properties in a layer'''
+    num_created = 0
+    wfs_layers = queryset.filter(server__service_type='WFS')
+    for layer in wfs_layers:
+        try:
+            service = layer.server.service
+            response = service.getfeature(typename=layer.layername,outputFormat='GeoJSON')
+            data = json.loads(response.read())
             features = gpd.GeoDataFrame.from_features(data)
             
             def property_name(name):
@@ -38,6 +74,7 @@ def create_legends(modeladmin, request, queryset):
 
             properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
             exclude = ['geometry','fid','ogc_fid','no','nr','id','sn', 'x','y','adindanx','adindany','remarks','remark','lon','lat','longitude','latitude','easting','northing']
+
             for name, series in features.iteritems():
                 if name.lower() not in exclude:
                     prop = property_name(name)
@@ -53,6 +90,4 @@ def create_legends(modeladmin, request, queryset):
         except Exception as e:
             messages.error(request, e)
     messages.success(request, f'{num_created} legends created')
-    
-create_legends.short_description = 'Create default legends'
     

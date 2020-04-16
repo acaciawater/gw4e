@@ -14,7 +14,7 @@ def hsv2hex(h,s=1,v=1):
 class Legend(models.Model):
     ''' provide a legend for a property on a WFS layer '''
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='legends', limit_choices_to={'server__service_type': 'WFS'})
-    property = models.CharField(_('property'), max_length=30)
+    property = models.CharField(_('property'), max_length=40)
     title = models.CharField(_('title'),max_length=40,default=_('legend'))
 
     def __str__(self):
@@ -43,7 +43,9 @@ class Legend(models.Model):
         if series is None:
             values = self.get_features()[self.property]
             series = values.dropna()
-            
+        else:
+            series = series.dropna()
+
         if series.size > 1:
             from pandas.api.types import is_numeric_dtype
             if is_numeric_dtype(series):

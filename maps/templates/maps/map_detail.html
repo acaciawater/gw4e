@@ -28,7 +28,7 @@
  
 <script>
 
-var inventory = new Inventory()
+//var inventory = new Inventory()
 
 var legend;
 
@@ -68,43 +68,42 @@ async function addAllOverlays(groups, map, list) {
 	});
 }
 
-function getSelectedProperty() {
-	const prop = $("#property option:selected").text()
-	return prop.startsWith('Choose') ? undefined : prop 
-}
+// function getSelectedProperty() {
+// 	const prop = $("#property option:selected").text()
+// 	return prop.startsWith('Choose') ? undefined : prop 
+// }
 
-function propertyChanged() {
-	inventory.attribute = getSelectedProperty()
-	showLegend(theMap)
-	inventory.redraw(theMap)
-}
+// function propertyChanged() {
+// 	inventory.attribute = getSelectedProperty()
+// 	showLegend(theMap)
+// 	inventory.redraw(theMap)
+// } 
+///***
+// * call getFeatureInfo on all layers on the map and return contents of html table for popup
+// */
+// async function getFeatureInfo(evt) {
+// 	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable && layer.options.visible)
+// 	const promises = layers.map(layer => {
+// 		const fi = new FeatureInfo(layer)
+// 		return fi.getFeatureInfo(evt)
+// 	})
+// 	const featureInfo = await Promise.all(promises)
+// 	return featureInfo.filter(a => a.length > 0)
+// }
 
-/***
- * call getFeatureInfo on all layers on the map and return contents of html table for popup
- */
-async function getFeatureInfo(evt) {
-	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable && layer.options.visible)
-	const promises = layers.map(layer => {
-		const fi = new FeatureInfo(layer)
-		return fi.getFeatureInfo(evt)
-	})
-	const featureInfo = await Promise.all(promises)
-	return featureInfo.filter(a => a.length > 0)
-}
+// function showLegend(map) {
+// 	if (legend)
+// 		legend.remove()
+// 	legend = L.control({position: "bottomright"})
+// 	legend.onAdd = function(map) {
+// 		const div = L.DomUtil.create("div", "legend");
+// 		div.innerHTML = inventory.getLegendContent()
+// 		return div;
+// 	}
+// 	legend.addTo(map)
+// }
 
-function showLegend(map) {
-	if (legend)
-		legend.remove()
-	legend = L.control({position: "bottomright"})
-	legend.onAdd = function(map) {
-		const div = L.DomUtil.create("div", "legend");
-		div.innerHTML = inventory.getLegendContent()
-		return div;
-	}
-	legend.addTo(map)
-}
-
-$(function() {
+ $(function() {
 
 	// initialize the map
 	const options = {{options|safe}};

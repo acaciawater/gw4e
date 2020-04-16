@@ -86,7 +86,7 @@ function toggleLayer (event, id) {
   $.post(`toggle/${id}`)
 }
 
-async function createOverlay (map, layer) {
+async function createOverlay (layer) {
 	if (layer.options.service == 'WMS') {
 		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
 	} 
@@ -101,51 +101,35 @@ async function createOverlay (map, layer) {
 		return $.getJSON(layer.url, options).then(response => {
 			const wfs = new WFSLayer()
 			const overlay = wfs.createLayer(response)
-			overlay.wfsParams = options
-			wfs.loadLegend(`/ows/legends/${layer.layer_id}`)
-			return overlay
+			overlay.wfs = wfs
+			return wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(()=> {
+				return overlay
+			})
 		})
 	}
 }
 
-async function createOverlay_old (map, layer) {
-	if (layer.options.service == 'WMS') {
-		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
-	} 
-	else if (layer.options.service == 'WFS') {
-		const options = {
-			service: layer.options.service,
-		    version: layer.options.version,
-		  	request: 'GetFeature',
-		  	typename: layer.options.layers,
-		  	outputformat: 'GeoJSON'
-		}
-		return $.getJSON(layer.url, options).then(response => {
-			const overlay = L.geoJSON(response, {
-				onEachFeature: (feature, layer) => {},
-			    pointToLayer: (feature, latlng) => {
-			    	return L.circleMarker(latlng, {
-		    		    radius: 5,
-		    		    fillColor: 'red', //TODO: use legend
-		    		    color: 'white',
-		    		    weight: 1,
-		    		    opacity: 1,
-		    		    fillOpacity: 0.8
-		    		})
-			    }
-			})
-			overlay.wfsParams = options
-			return overlay
-		})
-	}
+/**
+ * property of a wfs layer has changed
+ */
+function propertyChanged(select, id) {
+	const name = select.options[select.selectedIndex].text
+	console.debug(id, name)
+	const overlay = overlayLayers[id]
+	const wfs = overlay.wfs
+	wfs.setDefaultProperty(name)
+	wfs.updateStyle(name)
+	const content = wfs.getLegendContent(name)
+	$(`#legend_${id} .legend-content`).html(content)
 }
 
 async function addOverlays (map, list, layers) {
   return layers.forEach(layer => {
-    createOverlay(map, layer).then(overlay => {
+    createOverlay(layer).then(overlay => {
 	    if (overlay) {
 	        const id = overlayLayers.push(overlay) - 1
 	        // save layer definition for easy reference
+		    overlay.id = id
 		    overlay.layerDefn = layer
 	    	const icon = layer.visible ? iconVisible : iconInvisible
 		    let item = `<li id=layer_${layer.id} class="list-group-item py-1">
@@ -156,6 +140,18 @@ async function addOverlays (map, list, layers) {
 		    }
 		    if (layer.legend) {
 		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+		    }
+		    else {
+		    	if (overlay.wfs) {
+		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
+		 			let index = 1
+		 			overlay.wfs.getProperties().forEach(prop => {
+		 				select += `<option value="${index}">${prop}</option>`
+		 				index++;
+		 			})
+		 			select += '</select>'
+			    	item += `<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`
+		    	}
 		    }
 		    list.append(item)
 		
