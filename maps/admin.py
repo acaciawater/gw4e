@@ -157,14 +157,12 @@ class LayerInline(admin.TabularInline):
         if db_field.name == 'layer':
             kwargs['queryset'] = OGCLayer.objects.order_by('server__name','layername')
         elif db_field.name == 'group':
-            queryset = Group.objects.order_by('name')
-            if self.parent:
-                queryset = queryset.filter(map=self.parent)
-            if request.user.is_anonymous:
-                queryset = queryset.filter(map__user__isnull=True)
-            else:
-                queryset = queryset.filter(map__user=request.user)
-            kwargs['queryset'] = queryset
+            groups = Group.objects.all()
+            if self.parent:            
+                # restrict groups to elegible users
+                queryset = groups.filter(map__name=self.parent.name, map__user__isnull=True)
+                queryset |= groups.filter(map__name=self.parent.name, map__user=request.user)
+            kwargs['queryset'] = queryset.order_by('map__user', 'name')
         return admin.TabularInline.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
 @register(Map)

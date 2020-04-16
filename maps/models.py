@@ -140,8 +140,11 @@ class Group(models.Model):
         return self.layer_set.count()
 
     def __str__(self):
-        return '{}:{}'.format(self.map.name, self.name)
-
+        result = '{}:{}'.format(self.map.name, self.name)
+        if self.map.user:
+            result += ' ({})'.format(self.map.user)
+        return result
+    
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
