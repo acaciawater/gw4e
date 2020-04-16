@@ -138,26 +138,26 @@ $(function() {
 			})
 		})
 	})	
-	// Load the inventory data
-	inventory.loadData('/static/inventory.json').then(data => {
+// 	// Load the inventory data
+// 	inventory.loadData('/static/inventory.json').then(data => {
 
-		// load style for inventory data
-		inventory.loadStyles('/static/styles.json').then(styles => {
-			// add select control to ui
-			let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
-			let index = 1;
-			for (const cls in styles.classes) {
-				text += `<option value="${index}">${cls}</option>`;
-				index++;
-			}
-			text += '</select>';
-			$("#inventory").html(text);
+// 		// load style for inventory data
+// 		inventory.loadStyles('/static/styles.json').then(styles => {
+// 			// add select control to ui
+// 			let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
+// 			let index = 1;
+// 			for (const cls in styles.classes) {
+// 				text += `<option value="${index}">${cls}</option>`;
+// 				index++;
+// 			}
+// 			text += '</select>';
+// 			$("#inventory").html(text);
 
-			// create layer and add to map
-			inventory.createLayer(data).addTo(map)
-		})
+// 			// create layer and add to map
+// 			inventory.createLayer(data).addTo(map)
+// 		})
 		
-	})
+// 	})
 });
 
 </script>
@@ -209,7 +209,7 @@ body, .outer {
 	{% block list %}
 	<div id="listwrapper" class="col-sm-2 mh-100">
 		<div id="list" class="list-group"></div>
-		<div id="inventory" class="list-group mt-3"></div>
+<!-- 		<div id="inventory" class="list-group mt-3"></div> -->
 	</div>
 	{% endblock list %}
 </div>
