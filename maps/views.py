@@ -167,7 +167,7 @@ def docs2json(request):
         return result
     
     root = DocumentGroup.objects.get(parent__isnull=True)
-    cluster = request.GET.get('cluster')
+    cluster = request.GET.get('cluster',0)
     try:
         cluster = int(cluster)
     except ValueError:
