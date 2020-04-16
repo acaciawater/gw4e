@@ -12,16 +12,48 @@ from ogc.models import Layer as OGCLayer
 
 from .forms import LayerPropertiesForm, SelectMapForm
 from .models import Map, Layer, Group, DocumentGroup, Document
+from collections import OrderedDict
 
 
 admin.site.site_header = 'GW4E Administration'
+
+def optgroup(queryset, group_field, field, default=None):
+    ''' return nested choices for select widget '''
+    d = OrderedDict()
+    for item in queryset.order_by(group_field, field):
+        group = getattr(item, group_field)
+        if group is None:
+            group = default
+        else:
+            group = str(group)
+        choice = (item.pk, getattr(item, field))
+        if group in d:
+            d[group].append(choice)
+        else:
+            d[group] = [choice]
+    return d.items()
 
 @register(Group)
 class GroupAdmin(admin.ModelAdmin):
     fields = ('name', 'map')
     list_display = ('name', 'map', 'layer_count')
-    list_filter = ('map',)
+    list_filter = ('map','map__user')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'map':
+            queryset = Map.objects.filter(user__isnull=True)
+            if request.user.is_authenticated:
+                queryset |= Map.objects.filter(user=request.user)
+            kwargs['queryset']= queryset
+        return admin.ModelAdmin.formfield_for_foreignkey(self, db_field, request, **kwargs)
+    
+#     def formfield_for_dbfield(self, db_field, request, **kwargs):
+#         if db_field.name == 'map':
+#             queryset = Map.objects.filter(user__isnull=True)
+#             if request.user.is_authenticated:
+#                 queryset |= Map.objects.filter(user=request.user)
+#             db_field.choices = optgroup(queryset, 'user', 'name', default='public')
+#         return admin.TabularInline.formfield_for_dbfield(self, db_field, request, **kwargs)
 
 @register(Layer)
 class LayerAdmin(admin.ModelAdmin):
@@ -112,13 +144,27 @@ class LayerInline(admin.TabularInline):
     fields = ('layer', 'order', 'group', 'visible',
               'clickable', 'allow_download', 'opacity')
     extra = 0
-
+    parent = None
+    
     def get_queryset(self, request):
         return admin.TabularInline.get_queryset(self, request).order_by('order').prefetch_related('layer')
     
+    def get_formset(self, request, obj=None, **kwargs):
+        self.parent = obj
+        return admin.TabularInline.get_formset(self, request, obj=obj, **kwargs)
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'layer':
             kwargs['queryset'] = OGCLayer.objects.order_by('server__name','layername')
+        elif db_field.name == 'group':
+            queryset = Group.objects.order_by('name')
+            if self.parent:
+                queryset = queryset.filter(map=self.parent)
+            if request.user.is_anonymous:
+                queryset = queryset.filter(map__user__isnull=True)
+            else:
+                queryset = queryset.filter(map__user=request.user)
+            kwargs['queryset'] = queryset
         return admin.TabularInline.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
 @register(Map)
