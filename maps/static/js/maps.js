@@ -71,10 +71,9 @@ function toggleLayer (event, id) {
     theMap.removeLayer(overlay)
     layer.visible = false
     icon.className = icon.className.replace(iconVisible, iconInvisible)
-    const col = parent.find('.collapse')
-    col.collapse('hide')
+    parent.find('.collapse').collapse('hide')
     // remove spinner if layer toggled before finished loading
-	$(`#status_${layer.id}`).removeClass(spinner)
+	parent.find('.fa-spin').removeClass(spinner)
 
   } else {
     theMap.addLayer(overlay)
