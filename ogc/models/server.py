@@ -59,7 +59,7 @@ class Server(models.Model):
 
         if delete_nonexisting:
             # delete layers that are not reported in service contents
-            newLayers = set(self.enumLayers())
+            newLayers = set(self.enum_layers())
             self.layer_set.exclude(layername__in=newLayers).delete()
 
         # create new layers
