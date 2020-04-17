@@ -101,9 +101,7 @@ async function createOverlay (layer) {
 			const wfs = new WFSLayer()
 			const overlay = wfs.createLayer(response)
 			overlay.wfs = wfs
-			return wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(()=> {
-				return overlay
-			})
+			return overlay
 		})
 	}
 }
@@ -112,7 +110,7 @@ async function createOverlay (layer) {
  * property of a wfs layer has changed
  */
 function propertyChanged(select, id) {
-	const name = select.options[select.selectedIndex].text
+	const name = select.options[select.selectedIndex].value
 	console.debug(id, name)
 	const overlay = overlayLayers[id]
 	const wfs = overlay.wfs
@@ -140,15 +138,27 @@ async function addOverlays (map, list, layers) {
 		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
 		    }
 		    else {
+//		    	if (overlay.wfs) {
+//		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
+//		 			let index = 1
+//		 			overlay.wfs.getProperties().forEach(prop => {
+//		 				select += `<option value="${index}">${prop}</option>`
+//		 				index++;
+//		 			})
+//		 			select += '</select>'
+//			    	item += `<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`
+//		    	}
 		    	if (overlay.wfs) {
-		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
-		 			let index = 1
-		 			overlay.wfs.getProperties().forEach(prop => {
-		 				select += `<option value="${index}">${prop}</option>`
-		 				index++;
-		 			})
-		 			select += '</select>'
-			    	item += `<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`
+					overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
+			    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
+				 			let index = 1
+				 			legends.filter(l => l.entries.length > 0).forEach(legend => {
+				 				select += `<option value="${legend.property}">${legend.title}</option>`
+				 				index++;
+				 			})
+				 			select += '</select>'
+					    	$(`#layer_${layer.id}`).append(`<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`)
+					})
 		    	}
 		    }
 		    list.append(item)
