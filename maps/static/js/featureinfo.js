@@ -11,9 +11,9 @@ class FeatureInfo {
 		this.overlay = overlay
 	    this.props = overlay.options.propertyName
 	    if (this.props) {
-	    	this.props = this.props.split(',') 
+	    	this.props = this.props.split(',').map(p=>p.trim())
 	    }
-	    this.displayName = overlay.options.displayName
+	    this.displayName = overlay.layerDefn.name
 	    this.layer = overlay.options.layers
 	    this.url = overlay._wmsUrl || overlay._url
 	}
@@ -33,26 +33,26 @@ class FeatureInfo {
 	    let itemCount = 0
 	    if (resp.tagName === 'GetFeatureInfoResponse') {
 	      if (resp.children) {
-	        resp.children.forEach(layer => {
-	          let layerName = layer.attr.name
-	          if (layerName === this.layer) {
+	        resp.children.forEach(child => {
+	          let layerName = child.attr.name
+	          if (layerName == this.layer) {
 	        	  // use provided display name (wmslayer's title)
 	        	  layerName = this.displayName
 	          }
-	          if (layer.children) {
-	            layer.children.forEach(item => {
-	              if (item.tagName === 'Attribute') {
+	          if (child.children) {
+	            child.children.forEach(item => {
+	              if (item.tagName == 'Attribute') {
 	                // Raster Info: single attribute without feature(s)
 	                const value = item.attr.value
 	                itemCount++
 	                html += `<tr><td colspan="2">${layerName}</td><td>${value}</td></tr>`
 	              } 
-	              else if (item.tagName === 'Feature') {
+	              else if (item.tagName == 'Feature') {
 	                // Vector Info (features)
 	                const id = item.attr.id
 	                if (item.children) {
 	                  item.children.forEach(property => {
-	                    if (property.tagName === 'Attribute') {
+	                    if (property.tagName == 'Attribute') {
 	                      const name = property.attr.name
 	                      if (!this.excludes.includes(name)) {
 		                      if (!this.props || this.props.includes(name)) {

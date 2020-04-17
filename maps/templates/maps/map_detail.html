@@ -62,8 +62,10 @@ async function addAllOverlays(groups, map, list) {
  */
 async function getFeatureInfo(evt) {
 	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.layerDefn.clickable)
-	const fi = new FeatureInfo()
-	const promises = layers.map(layer => fi.getFeatureInfo(evt, layer))
+	const promises = layers.map(layer => {
+		const fi = new FeatureInfo(layer)
+		return fi.getFeatureInfo(evt)
+	})
 	const featureInfo = await Promise.all(promises)
 	return featureInfo.filter(a => a.length > 0)
 }
@@ -90,7 +92,7 @@ $(function() {
 				// query all visible wms layers
 				getFeatureInfo(evt).then(info => {
 					if (info.length > 0) {
-				    	L.popup({ maxWidth: 800})
+				    	L.popup({minWidth: 400, maxWidth: 800, maxHeight:600})
 					    .setLatLng(evt.latlng)
 					    .setContent('<h5 class="text-center unibar">Information</h5>\
 					    		<table class="table table-hover table-sm">\
