@@ -35,7 +35,7 @@ def optgroup(queryset, group_field, field, default=None):
 
 @register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    fields = ('name', 'map')
+    fields = ('name', 'map', 'open')
     list_display = ('name', 'map', 'layer_count')
     list_filter = ('map','map__user')
 

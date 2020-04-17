@@ -38,7 +38,7 @@ async function addAllOverlays(groups, map, list) {
 		const groupId = `group${id++}`;
 		let item = `<a class="list-group-item list-group-item-secondary py-1" data-toggle="collapse" href="#${groupId}" aria-expanded="true" aria-controls="${groupId}">
 		<i class="fas pr-3 fa-layer-group"></i><strong>${group.name}</strong></a>
-		<div class="collapse show" id="${groupId}"></div>`;
+		<div class="collapse ${group.state}" id="${groupId}"></div>`;
 		list.append(item);
 
 		// Allow user to sort layers in group list

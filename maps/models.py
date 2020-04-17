@@ -92,7 +92,8 @@ class Map(MapsModel):
         return json.dumps({
             'groups': [
                     {'name': group.name, 
-                     'layers': layers(group)
+                     'layers': layers(group),
+                     'state': 'show' if group.open else 'hide',
                     } for group in self.group_set.order_by('order')
                 ]
             })
@@ -138,6 +139,7 @@ class Group(models.Model):
     name = models.CharField(_('group'), max_length=100)
     map = models.ForeignKey(Map, on_delete=models.CASCADE)
     order = models.SmallIntegerField(_('order'), default=1)
+    open = models.BooleanField(_('open'), default=False)
     
     def layer_count(self):
         return self.layer_set.count()
