@@ -16,21 +16,14 @@
 <script src="//unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
 <script src="//unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js"></script>
 <script src="https://unpkg.com/leaflet.nontiledlayer@1.0.8/dist/NonTiledLayer.js"></script>
-<script src="//unpkg.com/leaflet.markercluster@1.0.5/dist/leaflet.markercluster.js"></script>
 <script src="//unpkg.com/esri-leaflet@2.1.1/dist/esri-leaflet.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script src="/static/js/leaflet.wmslegend.js"></script>
 <script src="/static/js/xml2json.js"></script>
 <script src="/static/js/maps.js"></script>
-<script src="/static/js/inventory.js"></script>
 <script src="/static/js/wfslayer.js"></script>
 <script src="/static/js/featureinfo.js"></script>
  
 <script>
-
-//var inventory = new Inventory()
-
-var legend;
 
 function getCookie(cookie) {
 	const cookies = decodeURIComponent(document.cookie).split(';')
@@ -39,10 +32,6 @@ function getCookie(cookie) {
 	return cookies.length==1? cookies[0].substring(cookie.length+1): "";
 }
 
-/***
- * returns array of promises (one for every group) that resolve when layers in the group have been loaded
- * TODO: no async needed: async loading is handled by leaflet
- */
 async function addAllOverlays(groups, map, list) {
 	let id = 0;
 	return groups.forEach(group => {
@@ -68,42 +57,7 @@ async function addAllOverlays(groups, map, list) {
 	});
 }
 
-// function getSelectedProperty() {
-// 	const prop = $("#property option:selected").text()
-// 	return prop.startsWith('Choose') ? undefined : prop 
-// }
-
-// function propertyChanged() {
-// 	inventory.attribute = getSelectedProperty()
-// 	showLegend(theMap)
-// 	inventory.redraw(theMap)
-// } 
-///***
-// * call getFeatureInfo on all layers on the map and return contents of html table for popup
-// */
-// async function getFeatureInfo(evt) {
-// 	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.options.clickable && layer.options.visible)
-// 	const promises = layers.map(layer => {
-// 		const fi = new FeatureInfo(layer)
-// 		return fi.getFeatureInfo(evt)
-// 	})
-// 	const featureInfo = await Promise.all(promises)
-// 	return featureInfo.filter(a => a.length > 0)
-// }
-
-// function showLegend(map) {
-// 	if (legend)
-// 		legend.remove()
-// 	legend = L.control({position: "bottomright"})
-// 	legend.onAdd = function(map) {
-// 		const div = L.DomUtil.create("div", "legend");
-// 		div.innerHTML = inventory.getLegendContent()
-// 		return div;
-// 	}
-// 	legend.addTo(map)
-// }
-
- $(function() {
+$(function() {
 
 	// initialize the map
 	const options = {{options|safe}};
@@ -137,26 +91,6 @@ async function addAllOverlays(groups, map, list) {
 			})
 		})
 	})	
-// 	// Load the inventory data
-// 	inventory.loadData('/static/inventory.json').then(data => {
-
-// 		// load style for inventory data
-// 		inventory.loadStyles('/static/styles.json').then(styles => {
-// 			// add select control to ui
-// 			let text = '<li class="list-group-item list-group-item-secondary">Inventory Data</li><select id="property" class="custom-select" onchange="propertyChanged()"><option selected>Choose...</option>';
-// 			let index = 1;
-// 			for (const cls in styles.classes) {
-// 				text += `<option value="${index}">${cls}</option>`;
-// 				index++;
-// 			}
-// 			text += '</select>';
-// 			$("#inventory").html(text);
-
-// 			// create layer and add to map
-// 			inventory.createLayer(data).addTo(map)
-// 		})
-		
-// 	})
 });
 
 </script>
