@@ -124,7 +124,10 @@ class Map(MapsModel):
         return list(map(float, self.bbox.split(','))) if self.bbox else self.set_extent()
 
     def __str__(self):
-        return self.name
+        result = self.name
+        if self.user:
+            result += ' ({})'.format(self.user)
+        return result
 
     def get_absolute_url(self):
         return reverse('map-detail', args=[self.pk])
