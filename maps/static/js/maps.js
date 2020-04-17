@@ -85,7 +85,7 @@ function toggleLayer (event, id) {
   $.post(`toggle/${id}`)
 }
 
-function createOverlay (layer) {
+async function createOverlay (layer) {
 	if (layer.options.service == 'WMS') {
 		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
 	} 
