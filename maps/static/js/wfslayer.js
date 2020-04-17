@@ -118,7 +118,7 @@ class WFSLayer {
           const value = feature.properties[prop] || "no data"
           layer.bindTooltip(`${prop}: ${value}`)
         }
-        layer.bindPopup(this.getFeatureInfo(feature), { maxWidth: 800 })
+        layer.bindPopup(this.getFeatureInfo(feature), { maxHeight: 600, minWidth: 400 })
       },
       pointToLayer: (feature, latlng) => {
       	const prop = this.getDefaultProperty()

@@ -138,16 +138,6 @@ async function addOverlays (map, list, layers) {
 		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
 		    }
 		    else {
-//		    	if (overlay.wfs) {
-//		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
-//		 			let index = 1
-//		 			overlay.wfs.getProperties().forEach(prop => {
-//		 				select += `<option value="${index}">${prop}</option>`
-//		 				index++;
-//		 			})
-//		 			select += '</select>'
-//			    	item += `<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`
-//		    	}
 		    	if (overlay.wfs) {
 					overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
 			    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
