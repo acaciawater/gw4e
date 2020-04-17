@@ -46,15 +46,12 @@ class GroupAdmin(admin.ModelAdmin):
                 queryset |= Map.objects.filter(user=request.user)
             kwargs['queryset']= queryset
         return admin.ModelAdmin.formfield_for_foreignkey(self, db_field, request, **kwargs)
-    
-#     def formfield_for_dbfield(self, db_field, request, **kwargs):
-#         if db_field.name == 'map':
-#             queryset = Map.objects.filter(user__isnull=True)
-#             if request.user.is_authenticated:
-#                 queryset |= Map.objects.filter(user=request.user)
-#             db_field.choices = optgroup(queryset, 'user', 'name', default='public')
-#         return admin.TabularInline.formfield_for_dbfield(self, db_field, request, **kwargs)
 
+class GroupInline(admin.TabularInline):
+    model = Group
+    classes = ('collapse',)
+    extra = 0
+    
 @register(Layer)
 class LayerAdmin(admin.ModelAdmin):
     fields = (('layer', 'map', 'group'),
@@ -143,14 +140,15 @@ class LayerInline(admin.TabularInline):
     model = Layer
     fields = ('layer', 'order', 'group', 'visible',
               'clickable', 'allow_download', 'opacity')
+    classes = ('collapse',)
     extra = 0
-    parent = None
+    owner = None
     
     def get_queryset(self, request):
         return admin.TabularInline.get_queryset(self, request).order_by('order').prefetch_related('layer')
     
     def get_formset(self, request, obj=None, **kwargs):
-        self.parent = obj
+        self.owner = obj
         return admin.TabularInline.get_formset(self, request, obj=obj, **kwargs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -158,10 +156,12 @@ class LayerInline(admin.TabularInline):
             kwargs['queryset'] = OGCLayer.objects.order_by('server__name','layername')
         elif db_field.name == 'group':
             groups = Group.objects.all()
-            if self.parent:            
+            if self.owner:            
                 # restrict groups to elegible users
-                queryset = groups.filter(map__name=self.parent.name, map__user__isnull=True)
-                queryset |= groups.filter(map__name=self.parent.name, map__user=request.user)
+                queryset = groups.filter(map__name=self.owner.name, map__user__isnull=True)
+                if self.owner.user:
+                    # this is not a public map
+                    queryset |= groups.filter(map__name=self.owner.name, map__user=self.owner.user)
             kwargs['queryset'] = queryset.order_by('map__user', 'name')
         return admin.TabularInline.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
@@ -170,7 +170,7 @@ class MapAdmin(admin.ModelAdmin):
     list_display = ('name','user')
     list_filter = ('user',)
     search_fields = ('name',)
-    inlines = [LayerInline]
+    inlines = [GroupInline, LayerInline]
     actions = ['update_extent', 'clone_map']
 
     def update_extent(self, request, queryset):
