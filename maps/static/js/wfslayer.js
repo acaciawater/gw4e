@@ -8,16 +8,20 @@ class WFSLayer {
     this.layer = undefined
   }
 
+  fetchJSON(url) {
+	  return fetch(url).then(response => response.json())
+  }
+  
   loadLegend(url) {
-    return $.getJSON(url).then(response => {
-      this.legends = response.legends
-      return this.legends
-    })
+	  return this.fetchJSON(url).then(data => {
+		  this.legends = data.legends
+		  return this.legends
+	  })
   }
 
   /**
    * return list of property names
-   * (uses first feature found)
+   * (uses first feature)
    */
   getProperties() {
 	  return Object.keys(this.features[0].properties)

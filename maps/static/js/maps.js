@@ -79,14 +79,13 @@ function toggleLayer (event, id) {
     theMap.addLayer(overlay)
     layer.visible = true
     icon.className = icon.className.replace(iconInvisible, iconVisible)
-    const col = parent.find('.collapse')
-    col.collapse('show')
+    parent.find('.collapse').collapse('show')
   }
   // inform backend about visibility change
   $.post(`toggle/${id}`)
 }
 
-async function createOverlay (layer) {
+function createOverlay (layer) {
 	if (layer.options.service == 'WMS') {
 		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
 	} 
@@ -128,7 +127,6 @@ async function addOverlays (map, list, layers) {
     createOverlay(layer).then(overlay => {
 	    if (overlay) {
 	        const id = overlayLayers.push(overlay) - 1
-	        // save layer definition for easy reference
 		    overlay.id = id
 		    overlay.layerDefn = layer
 	    	const icon = layer.visible ? iconVisible : iconInvisible
