@@ -57,6 +57,17 @@ async function addAllOverlays(groups, map, list) {
 	});
 }
 
+/***
+ * call getFeatureInfo on all WMS layers on the map and return contents of html table for popup
+ */
+async function getFeatureInfo(evt) {
+	const layers = overlayLayers.filter(layer => layer.wmsParams && layer.layerDefn.clickable)
+	const fi = new FeatureInfo()
+	const promises = layers.map(layer => fi.getFeatureInfo(evt, layer))
+	const featureInfo = await Promise.all(promises)
+	return featureInfo.filter(a => a.length > 0)
+}
+
 $(function() {
 
 	// initialize the map
