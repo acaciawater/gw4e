@@ -10,6 +10,8 @@ from ogc.models.legend import Range, Value, Legend
 from django.contrib.admin.filters import SimpleListFilter
 from owslib.feature.schema import get_schema
 from ogc.actions import classify, create_legends
+import json
+from geopandas.geodataframe import GeoDataFrame
 
 @register(Layer)    
 class LayerAdmin(admin.ModelAdmin):
@@ -78,15 +80,21 @@ class LegendForm(ModelForm):
     class Meta:
         model = Legend
         exclude = []
-        
+
+    def get_choices(self, layer):
+        # get_schema calls DescribeFeatureType and returns mangled property names
+        properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
+        return ((prop,prop) for prop in properties.keys())
+#         response = layer.server.service.getfeature(typename=layer.layername,maxfeatures=1,outputFormat='GeoJSON')
+#         data = json.loads(response.read())
+#         features = GeoDataFrame.from_features(data)
+#         return ((col,col) for col in features.columns)
+                
     def __init__(self, *args, **kwargs):
         super(LegendForm, self).__init__(*args, **kwargs)
         choices = ((None,'--------'),('select','select'))
         if self.instance is not None and hasattr(self.instance,'layer'):
-            layer = self.instance.layer
-            properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
-            if properties:
-                choices = ((prop,prop) for prop in properties.keys())
+            choices = self.get_choices(self.instance.layer)
         self.fields['property'].widget = Select(choices=choices)    
         
 class WFS_server_filter(SimpleListFilter):
