@@ -44,8 +44,10 @@ class FeatureInfo {
 	              if (item.tagName == 'Attribute') {
 	                // Raster Info: single attribute without feature(s)
 	                const value = item.attr.value
-	                itemCount++
-	                html += `<tr><td colspan="2">${layerName}</td><td>${value}</td></tr>`
+	                if (value) { // skip empty rows
+	                	itemCount++
+		                html += `<tr><td colspan="2">${layerName}</td><td>${value}</td></tr>`
+	                }
 	              } 
 	              else if (item.tagName == 'Feature') {
 	                // Vector Info (features)
@@ -57,8 +59,10 @@ class FeatureInfo {
 	                      if (!this.excludes.includes(name)) {
 		                      if (!this.props || this.props.includes(name)) {
 		                        const value = property.attr.value
-		                        itemCount++
-		                        html += `<tr><td>${layerName}</td><td>${name}</td><td>${value}</td></tr>`
+		                        if (value) { // skip empty rows
+			                        itemCount++
+			                        html += `<tr><td>${layerName}</td><td>${name}</td><td>${value}</td></tr>`
+		                        }
 		                      }
 	                      }
 	                    }

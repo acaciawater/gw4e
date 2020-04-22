@@ -87,7 +87,9 @@ class WFSLayer {
   getFeatureInfo (feature) {
     let html = '<h5 class="text-center unibar">Properties</h5><table class="table table-hover table-sm"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>'
     for (const [prop, value] of Object.entries(feature.properties)) {
-      html += `<tr><td>${prop}</td><td>${value || "-"}</td></tr>`
+    	if (value) { // skip empty rows
+    		html += `<tr><td>${prop}</td><td>${value || "-"}</td></tr>`
+    	}
     }
     return html + '</tbody></table>'
   }

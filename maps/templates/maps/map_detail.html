@@ -46,10 +46,7 @@ async function addAllOverlays(groups, map, list) {
 			update: function(event,ui) {
 				// get (integer) indices of overlays
 				const ids = $(list).find('li[id^="layer_"]').toArray().map(e => parseInt(e.id.split('_')[1]))
-				console.debug(ids)
 				sortOverlays(overlayLayers, ids)
-				const names = overlayLayers.map(o => o.layerDefn.name)
-				console.debug(names)
 				$.post('reorder/',JSON.stringify(ids))
 			}
 		});
@@ -155,7 +152,6 @@ body, .outer {
 	{% block list %}
 	<div id="listwrapper" class="col-sm-2 mh-100">
 		<div id="list" class="list-group"></div>
-<!-- 		<div id="inventory" class="list-group mt-3"></div> -->
 	</div>
 	{% endblock list %}
 </div>
