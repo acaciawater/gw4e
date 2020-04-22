@@ -25,13 +25,6 @@
  
 <script>
 
-function getCookie(cookie) {
-	const cookies = decodeURIComponent(document.cookie).split(';')
-		.map(token => token.trim())
-		.filter(token => token.startsWith(cookie));
-	return cookies.length==1? cookies[0].substring(cookie.length+1): "";
-}
-
 async function addAllOverlays(groups, map, list) {
 	let id = 0;
 	return groups.forEach(group => {

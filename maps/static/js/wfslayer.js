@@ -1,11 +1,10 @@
 class WFSLayer {
 
-  constructor () {
-	this.response = undefined
+  constructor (title) {
     this.features = []
     this.legends = []
-    this.defaultProperty = ''
     this.layer = undefined
+    this.title = title
   }
 
   fetchJSON(url) {
@@ -31,18 +30,6 @@ class WFSLayer {
 	    return this.legends.find(leg => leg.property == property)
 	  }
 
-  getDefaultProperty () {
-	    return this.defaultProperty
-	  }
-
-  setDefaultProperty (property) {
-	    this.defaultProperty = property
-	  }
-
-  getDefaultLegend () {
-	    return this.getLegend(this.getDefaultProperty())
-	  }
-
   getColor (value, property) {
     if (value !== null) {
       const legend = this.getLegend(property)
@@ -64,17 +51,20 @@ class WFSLayer {
   getStyle(feature, property) {
     const value = feature.properties[property]
     if (value === undefined) {
+      // property does not exist or is not defined
       return {
         radius: 3,
         color: 'gray',
         fillColor: 'gray',
-        weight: 1,
+        weight: 0,
+        stroke: false,
         opacity: 0.5,
-        fillOpacity: 0.3
+        fillOpacity: 0.5
       }
-    } else {
+    } 
+    else {
       return {
-        radius: 5,
+        radius: 4,
         fillColor: this.getColor(value, property),
         color: 'white',
         weight: 1,
@@ -85,7 +75,8 @@ class WFSLayer {
   }
 
   getFeatureInfo (feature) {
-    let html = '<h5 class="text-center unibar">Properties</h5><table class="table table-hover table-sm"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>'
+	const title = this.title || 'Properties'
+    let html = `<h5 class="text-center unibar">${title}</h5><table class="table table-hover table-sm"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`
     for (const [prop, value] of Object.entries(feature.properties)) {
     	if (value) { // skip empty rows
     		html += `<tr><td>${prop}</td><td>${value || "-"}</td></tr>`
@@ -107,46 +98,35 @@ class WFSLayer {
     return html
   }
 
+  options(property) {
+	  return {
+		  filter: feature => {
+			  return property? feature.properties[property]: true
+		  },
+		  pointToLayer: (feature, latlng) => {
+			  return L.circleMarker(latlng, this.getStyle(feature, property))
+		  },
+	  	  onEachFeature: (feature, layer) => {
+	  		  if (property) {
+	  			const value = feature.properties[property]
+	  			layer.bindTooltip(`${property}: ${value}`)
+	  		  }
+	  		  layer.bindPopup(this.getFeatureInfo(feature), { maxHeight: 600, minWidth: 400 })
+	  	  }
+	  }
+  }
   /**
    * create a leaflet layer from a wfs getfeature response
    */
   createLayer (response) {
-	this.response = response
     this.features = response.features
-    this.layer = L.geoJSON(response, {
-      onEachFeature: (feature, layer) => {
-    	const prop = this.getDefaultProperty()
-        if (prop) {
-          const value = feature.properties[prop] || "no data"
-          layer.bindTooltip(`${prop}: ${value}`)
-        }
-        layer.bindPopup(this.getFeatureInfo(feature), { maxHeight: 600, minWidth: 400 })
-      },
-      pointToLayer: (feature, latlng) => {
-      	const prop = this.getDefaultProperty()
-      	// consider skipping points with no data
-  		return L.circleMarker(latlng, this.getStyle(feature, prop))
-      }
-    })
+    this.layer = L.geoJSON(response, this.options())
     return this.layer    
   }
 
-  updateStyle(property) {
-	this.layer.setStyle(feature => {
-		return this.getStyle(feature, property)
-	})
-	// also update the tooltips
-	this.layer.eachLayer(layer => {
-      const value = layer.feature.properties[property] || "no data"
-      layer.bindTooltip(`${property}: ${value}`)
-	})
-  }
-  
-  redraw (map) {
-    if (this.layer) {
-      this.layer.remove()
-      this.layer = undefined
-    }
-    this.createLayer(this.response).addTo(map)
+  filter(property) {
+	  this.layer.options = {...this.layer.options, ...this.options(property)}
+	  this.layer.clearLayers()
+	  this.layer.addData(this.features)
   }
 }

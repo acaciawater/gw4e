@@ -98,7 +98,7 @@ async function createOverlay (layer) {
 		  	outputformat: 'GeoJSON'
 		}
 		return $.getJSON(layer.url, options).then(response => {
-			const wfs = new WFSLayer()
+			const wfs = new WFSLayer(layer.name)
 			const overlay = wfs.createLayer(response)
 			overlay.wfs = wfs
 			return overlay
@@ -114,8 +114,7 @@ function propertyChanged(select, id) {
 	console.debug(id, name)
 	const overlay = overlayLayers[id]
 	const wfs = overlay.wfs
-	wfs.setDefaultProperty(name)
-	wfs.updateStyle(name)
+	wfs.filter(name)
 	const content = wfs.getLegendContent(name)
 	$(`#legend_${id} .legend-content`).html(content)
 }
