@@ -167,7 +167,7 @@ class WFSLayer {
   async filter(property) {
 	  this.layer.options = {...this.layer.options, ...this.options(property)}
 	  this.layer.clearLayers()
-	  this.layer.lastProperty = property
+	  this.lastProperty = property
 	  this.layer.addData(this.features)
   }
   
