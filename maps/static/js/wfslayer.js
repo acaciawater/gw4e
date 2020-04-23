@@ -3,33 +3,69 @@ class WFSLayer {
   constructor (title) {
     this.features = []
     this.legends = []
-    this.layer = undefined
+    this.layer = L.geoJSON() // empty layer
+    this.layer.wfs = this // set back pointer
     this.title = title
   }
 
-  fetchJSON(url) {
+  /**
+   * load json data using Fetch API
+   */
+  fetchJSON(url, options) {
+	  if (options) {
+		  // add options to query string
+		  let u = new URL(url)
+		  for (let [key, value] of Object.entries(options)) {
+			  u.searchParams.append(key,value)
+		  }
+		  url = u.toString()
+	  }
 	  return fetch(url).then(response => response.json())
   }
   
+  /**
+   * load the legends from remote url
+   */
   loadLegend(url) {
-	  return this.fetchJSON(url).then(data => {
-		  this.legends = data.legends
+	  return this.fetchJSON(url).then(response => {
+		  this.legends = response.legends
 		  return this.legends
 	  })
   }
 
   /**
+   * load a FeatureCollection 
+   */
+  loadFeatures(url, options) {
+	  this.layer.fire('loading')
+	  return this.fetchJSON(url,options).then(response => {
+		  this.features = response.features
+		  this.layer.fire('load')
+		  return this.features
+	  })
+	  .catch(e => {
+		  this.layer.fire('error', e)
+	  })
+  }
+  
+  /**
    * return list of property names
-   * (uses first feature)
+   * (uses first feature only)
    */
   getProperties() {
 	  return Object.keys(this.features[0].properties)
   }
   
+  /**
+   * get the legend for a property
+   */
   getLegend (property) {
 	    return this.legends.find(leg => leg.property == property)
 	  }
 
+  /**
+   * return the marker color for a property value
+   */
   getColor (value, property) {
     if (value !== null) {
       const legend = this.getLegend(property)
@@ -48,18 +84,18 @@ class WFSLayer {
     return 'gray'
   }
 
+  /**
+   * return the style for a feature's property value
+   */
   getStyle(feature, property) {
     const value = feature.properties[property]
     if (value === undefined) {
-      // property does not exist or is not defined
+      // property does not exist or property value is empty
       return {
-        radius: 3,
-        color: 'gray',
+        radius: 2,
         fillColor: 'gray',
-        weight: 0,
         stroke: false,
-        opacity: 0.5,
-        fillOpacity: 0.5
+        fillOpacity: 0.8
       }
     } 
     else {
@@ -74,6 +110,9 @@ class WFSLayer {
     }
   }
 
+  /**
+   * return html content for feature info
+   */
   getFeatureInfo (feature) {
 	const title = this.title || 'Properties'
     let html = `<h5 class="text-center unibar">${title}</h5><table class="table table-hover table-sm"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`
@@ -85,9 +124,12 @@ class WFSLayer {
     return html + '</tbody></table>'
   }
 
+  /**
+   * get the legend content for a property
+   */
   getLegendContent (property) {
     const legend = this.getLegend(property)
-    if (legend === undefined) {
+    if (!legend) {
     	return ''
     }
     let html = `<strong>${legend.title}</strong>`
@@ -98,6 +140,9 @@ class WFSLayer {
     return html
   }
 
+  /**
+   * return L.GeoJSON options for a property
+   */
   options(property) {
 	  return {
 		  filter: feature => {
@@ -115,18 +160,21 @@ class WFSLayer {
 	  	  }
 	  }
   }
-  /**
-   * create a leaflet layer from a wfs getfeature response
-   */
-  createLayer (response) {
-    this.features = response.features
-    this.layer = L.geoJSON(response, this.options())
-    return this.layer    
-  }
 
-  filter(property) {
+  /**
+   * returns a promise that filters features and rebuilds layers
+   */
+  async filter(property) {
 	  this.layer.options = {...this.layer.options, ...this.options(property)}
 	  this.layer.clearLayers()
+	  this.layer.lastProperty = property
 	  this.layer.addData(this.features)
+  }
+  
+  /**
+   * return a promise to redraw (by reloading the features)
+   */
+  redraw() {
+	  return this.filter(this.lastProperty)
   }
 }

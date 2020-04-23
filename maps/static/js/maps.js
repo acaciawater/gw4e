@@ -90,20 +90,25 @@ async function createOverlay (layer) {
 		return layer.options.tiled? L.tileLayer.wms(layer.url, layer.options): L.nonTiledLayer.wms(layer.url, layer.options)
 	} 
 	else if (layer.options.service == 'WFS') {
-		const options = {
-			service: layer.options.service,
-		    version: layer.options.version,
-		  	request: 'GetFeature',
-		  	typename: layer.options.layers,
-		  	outputformat: 'GeoJSON'
-		}
-		return $.getJSON(layer.url, options).then(response => {
-			const wfs = new WFSLayer(layer.name)
-			const overlay = wfs.createLayer(response)
-			overlay.wfs = wfs
-			return overlay
+		const wfs = new WFSLayer(layer.name)
+		wfs.layer.on('add', function() {
+			if (!wfs.features || wfs.features.length == 0) {
+				// lazy load features
+				wfs.loadFeatures(layer.url, {
+					service: layer.options.service,
+				    version: layer.options.version,
+				  	request: 'GetFeature',
+				  	typename: layer.options.layers,
+				  	outputformat: 'GeoJSON'
+				})
+				.then(() => {
+					// show the result
+					wfs.redraw()
+				})
+			}
 		})
-	}
+		return wfs.layer
+	} 
 }
 
 /**
@@ -114,7 +119,8 @@ function propertyChanged(select, id) {
 	console.debug(id, name)
 	const overlay = overlayLayers[id]
 	const wfs = overlay.wfs
-	wfs.filter(name)
+	overlay.fire('loading')
+	wfs.filter(name).then(() => overlay.fire('load'))
 	const content = wfs.getLegendContent(name)
 	$(`#legend_${id} .legend-content`).html(content)
 }
@@ -136,20 +142,18 @@ async function addOverlays (map, list, layers) {
 		    if (layer.legend) {
 		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
 		    }
-		    else {
-		    	if (overlay.wfs) {
-					overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
-			    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
-				 			let index = 1
-				 			legends.filter(l => l.entries.length > 0).forEach(legend => {
-				 				select += `<option value="${legend.property}">${legend.title}</option>`
-				 				index++;
-				 			})
-				 			select += '</select>'
-					    	$(`#layer_${layer.id}`).append(`<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`)
-					})
-		    	}
-		    }
+	    	if (overlay.wfs) {
+				overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
+		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
+			 			let index = 1
+			 			legends.filter(l => l.entries.length > 0).forEach(legend => {
+			 				select += `<option value="${legend.property}">${legend.title}</option>`
+			 				index++;
+			 			})
+			 			select += '</select>'
+				    	$(`#layer_${layer.id}`).append(`<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`)
+				})
+	    	}
 		    list.append(item)
 		
 		    const status = $(`#status_${id}`)
