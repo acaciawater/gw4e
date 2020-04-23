@@ -20,7 +20,17 @@ class WFSLayer {
 		  }
 		  url = u.toString()
 	  }
-	  return fetch(url).then(response => response.json())
+	  return fetch(url,{cache:'force-cache'}).then(response => {
+		  return response.text().then(text => {
+			  if (text.startsWith('<ServiceExceptionReport')) {
+				  // TODO: parse report and extract reason
+				  throw "Service exception received"
+			  }
+			  else {
+				  return JSON.parse(text)
+			  }
+		  })
+	  })
   }
   
   /**
