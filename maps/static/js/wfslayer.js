@@ -9,6 +9,33 @@ class WFSLayer {
   }
 
   /**
+   * transform ogc service exception report to array of {code, message} objects
+   */
+  parseServiceExceptionReport(xml) {
+	  const parser = new DOMParser()
+	  const xmlDoc = parser.parseFromString(xml,'application/xml')
+	  const nsResolver = prefix => {
+		  const ns = {'ogc' : 'http://www.opengis.net/ogc'}
+		  return ns[prefix] || null
+		}
+	  const snap = xmlDoc.evaluate('//ogc:ServiceException', xmlDoc, nsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+	  let exceptions = []
+	  for (let i=0;i<snap.snapshotLength;i++) {
+		  const node = snap.snapshotItem(i)
+		  let msg = {message: node.textContent}
+		  const code = node.attributes.getNamedItem('code')
+		  if (code)
+			  msg[code.name] = code.value
+		  exceptions.push(msg)
+	  }
+	  return exceptions
+  }
+  
+  throwServiceException(text) {
+	  throw {errors: this.parseServiceExceptionReport(text)}
+  }
+  
+  /**
    * load json data using Fetch API
    */
   fetchJSON(url, options) {
@@ -20,11 +47,10 @@ class WFSLayer {
 		  }
 		  url = u.toString()
 	  }
-	  return fetch(url,{cache:'force-cache'}).then(response => {
+	  return fetch(url,{cache:'default'}).then(response => {
 		  return response.text().then(text => {
 			  if (text.startsWith('<ServiceExceptionReport')) {
-				  // TODO: parse report and extract reason
-				  throw "Service exception received"
+				  this.throwServiceException(text)
 			  }
 			  else {
 				  return JSON.parse(text)

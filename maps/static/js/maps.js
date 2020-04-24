@@ -144,7 +144,7 @@ async function addOverlays (map, list, layers) {
 		    }
 	    	if (overlay.wfs) {
 				overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
-		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected>Choose...</option>`
+		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected value="">Choose...</option>`
 			 			let index = 1
 			 			legends.filter(l => l.entries.length > 0).forEach(legend => {
 			 				select += `<option value="${legend.property}">${legend.title}</option>`
@@ -159,15 +159,24 @@ async function addOverlays (map, list, layers) {
 		    const status = $(`#status_${id}`)
 		    overlay.on('loading',function(evt) {
 			  status.removeClass(warning)
+	    	  status.attr('title', 'Loading')
 		      status.addClass(spinner)
 		    })
 		    overlay.on('load',function(evt) {
 		      status.removeClass(spinner)
 		      status.removeClass(warning)
+	    	  status.removeAttr('title')
 		    })
 		    overlay.on('error',function(evt) {
 		      status.removeClass(spinner)
 		      status.addClass(warning)
+		      if (evt.errors) {
+		    	  const msg = evt.errors.map(e => e.message).join(',')
+			      status.attr('title', msg)
+		      }
+		      else {
+		    	  status.removeAttr('title')
+		      }
 		    })
 		    if (layer.visible) {
 		      overlay.addTo(map)
