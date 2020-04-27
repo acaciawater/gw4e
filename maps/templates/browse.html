@@ -121,7 +121,9 @@ function loadTree(cluster) {
 		url += `?cluster=${cluster}`
 	}
 	getTreeData(url).then(tree => {
-		$("#tree1").bstreeview({data: tree})
+		const thetree = $("#tree1").bstreeview({data: tree})
+		const view = thetree.bstreeview
+		console.debug(view.settings)
 		$("#tree1 .open").collapse('show').removeClass('open')
 		const items = $("#tree1 .list-group-item") 
 		items.on("mouseleave", function() {
@@ -149,15 +151,19 @@ function loadTree(cluster) {
 }
 
 function changeCluster() {
-	const cluster = $("#cluster").val()
-// 	loadTree(cluster)
-	location.reload()
+	const urlParams = new URLSearchParams(window.location.search)
+	urlParams.set('cluster',$("#cluster").val())
+	window.location.search = urlParams
 }
 
 $(function() {
-	
+	const urlParams = new URLSearchParams(window.location.search)
+	if (urlParams.has('cluster')) {
+		const cluster = urlParams.get('cluster')
+		$("#cluster").val(cluster)
+	}
 	loadTree($("#cluster").val())
-	
-});
+})
+
 </script>
 {% endblock content %}
