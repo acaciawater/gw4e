@@ -39,6 +39,10 @@ class Legend(models.Model):
         return gpd.GeoDataFrame.from_features(data)
     
     def create_default(self, series=None):
+        
+        quantiles = [0,0.25,0.5,0.75,1.0]
+        colors = ['#0000ff','#09d609','#ffc800','#ff0000']
+
         ''' create a default legend '''
         if series is None:
             values = self.get_features()[self.property]
@@ -49,14 +53,15 @@ class Legend(models.Model):
         if series.size > 1:
             from pandas.api.types import is_numeric_dtype
             if is_numeric_dtype(series):
-                # try to classify numeric values (or dates) first
-                q = series.quantile([0,0.2,0.4,0.6,0.8,1.0])
+                # use quartiles
+                q = series.quantile(quantiles)
                 limits = q.values
                 lo = limits[0]
                 limits = limits[1:]
                 self.range_set.all().delete()
                 for index, hi in enumerate(limits):
-                    color = hsv2hex(float(index) / float(len(limits)-1))
+#                     color = hsv2hex(float(index) / float(len(limits)-1))
+                    color = colors[index] 
                     self.range_set.create(lo=lo, hi=hi, color=color, label = '%g - %g' % (lo,hi))
                     lo = hi
             else:

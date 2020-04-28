@@ -43,7 +43,7 @@ class ServerForm(ModelForm):
 class ServerAdmin(admin.ModelAdmin):
     model = Server
     actions = ['updateLayers']
-    inlines = [LayerInline]
+#     inlines = [LayerInline]
     form = ServerForm
     list_display = ('name','service_type',)
     list_filter = ('service_type',)
@@ -83,12 +83,12 @@ class LegendForm(ModelForm):
 
     def get_choices(self, layer):
         # get_schema calls DescribeFeatureType and returns mangled property names
-        properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
-        return ((prop,prop) for prop in properties.keys())
-#         response = layer.server.service.getfeature(typename=layer.layername,maxfeatures=1,outputFormat='GeoJSON')
-#         data = json.loads(response.read())
-#         features = GeoDataFrame.from_features(data)
-#         return ((col,col) for col in features.columns)
+#        properties = get_schema(layer.server.url, layer.layername, version=layer.server.version).get('properties',{})
+#        return ((prop,prop) for prop in properties.keys())
+        response = layer.server.service.getfeature(typename=layer.layername,maxfeatures=1,outputFormat='GeoJSON')
+        data = json.loads(response.read())
+        features = GeoDataFrame.from_features(data)
+        return ((col,col) for col in features.columns)
                 
     def __init__(self, *args, **kwargs):
         super(LegendForm, self).__init__(*args, **kwargs)
