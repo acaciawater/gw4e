@@ -34,7 +34,7 @@ class Layer(models.Model):
     # ---------------------------------------------------------------------------
     
     def __str__(self):
-        return '{}:{}'.format(self.server, self.title or self.layername)
+        return '{}:{}'.format(self.server, self.layername)
 
     def details(self):
         for _key, value in self.server.layer_details(self.layername).items():
