@@ -172,7 +172,7 @@ class WFSLayer {
     legend.entries.forEach(entry => {
     	html += `<div><i class="fas fa-circle fa-xxs px-2" style="color:${entry.color}"></i>${entry.label}</div>`
     })
-    html += '<div><i class="fas fa-circle fa-xxs px-2" style="color:gray"></i>no data</div>'
+//    html += '<div><i class="fas fa-circle fa-xxs px-2" style="color:gray"></i>no data</div>'
     return html
   }
 
