@@ -1,122 +1,47 @@
-{% extends 'base.html' %}
-{% block title %}GW4E Dissemination Tool{% endblock %}
-{% block script %}
-{{ block.super }}
-<script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
-<script>
-$(function() {
-	// initialize the map
-	var map = L.map("map",{center:[10,40],zoom:4});
-	var osm = L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 4,
-		minZoom: 4,
- 		attribution: '&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	})
-	
-	var stamen = L.tileLayer('http://tile.stamen.com/terrain/{z}/{x}/{y}.png', {
-	   attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.',
-		maxZoom: 5,
-		minZoom: 5,
-	})
-	stamen.addTo(map)
-	
-	$.getJSON('/static/clusters.json').then(data => {
-		const clusters = L.geoJSON(data,{
-            onEachFeature: (feature, layer) => {
-                layer.bindTooltip(feature.properties.zonename)
-                layer.setStyle({color: '#1CABE3'})
-                layer.on('mouseover', () => {
-                  layer.setStyle({ color: 'red'})
-                  layer.bringToFront()
-                })
-                layer.on('mouseout', () => {
-                  layer.setStyle({color:'#1CABE3'})
-                })
-                layer.on('click', () => {
-                	window.open(`/map?cluster=${feature.properties.cluster}`)
-                })
-              }
-		})
-		clusters.addTo(map)
-		const bounds = clusters.getBounds()
-		if (bounds.isValid()) {
-			map.fitBounds(bounds)
-		}
-	})
-})
-
-</script>
-{% endblock %}
-{% block style %}
-{{ block.super }}
-<link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
-
-<style>
-
-#map {
-  height: 50%;
-  border: 1px solid #1CABE3;
-}
-
-.container {
-  height: 100%;
-  background-color: white;
-  background-image: url("/static/wave.png");
-  background-position: bottom;
-  background-size: 100% 15%;
-  background-repeat: no-repeat;
-}
-
-.note {
-  color: white;
-  position: absolute;
-  top: 90%;
-  width: 50%;
-  left: 25%;
-  font-size: small;
-}
-
-.content {
-  margin-left: 10%;
-  margin-right: 10%;
-  padding-top: 24px;
-}
-
-h2 {
-  padding-bottom: 0.5em;
-}
-
-.btn-primary.custom {
-  background-color: navy;
-  border-color: navy;
-}
-
-</style>
-{% endblock %}
-{% block content %}
-<div class="container">
-<div class="content h-100">
-<h2 class="text-center">Groundwater Mapping<br>for Climate Resilient WASH in Ethiopia</h2>	
-<h3 class="text-center">Dissemination of project results</h3>
-<hr/>
-<div class="row h-100">
-<div class="col h-100">
-<div id="map" class="mb-2"></div>
-<span class="text-muted"><small><i>Click on a cluster to open the map viewer, or preview a (non-validated) country-wide suitability map <a href="/map?cluster=0">here.</a></i>
-<a class="btn btn-primary custom float-right" role="button" href="/browse" target="_blank">Documents</a>
-</small>
-</span>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Proview</title>
+<script src="//code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js" integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30=" crossorigin="anonymous"></script>	
+<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="//stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
+<link rel="stylesheet" href="/static/css/proview.css"/>
+</head>
+<body>
+<div id="wrapper" class="container-fluid d-flex flex-column">
+<div id="header"><h1>Groundwater mapping for climate resilient WASH in arid and semi-arid areas of Ethiopia</h1><br></div>
+<div class="d-flex h-100">
+<div id="sidebar" class="d-flex flex-column">
+  <div class="list-group">
+	<button type="button" class="list-group-item btn btn-primary" data-toggle="modal" data-target="#projectModal" >Project</button>
+{% include "project-modal.html" %}
+	<button type="button" class="list-group-item btn btn-primary" data-toggle="modal" data-target="#partnersModal" >Partners</button>
+{% include "partners-modal.html" %}
+	<a href="/browse" class="list-group-item list-group-item-action">Reports and maps</a>
+	<a href="/map?cluster=1" class="list-group-item list-group-item-action">Map Viewer</a>
+	<button type="button" class="list-group-item btn btn-primary" data-toggle="modal" data-target="#disclaimerModal" >Disclaimer</button>
+{% include "disclaimer-modal.html" %}
+  </div>
+  <div id="logos" class="mt-auto">
+    <img class="logo1" src="/static/logos/reset.png">
+    <img class="logo1" src="/static/logos/eu.png">
+    <img class="logo1" src="/static/logos/unicef.png">
+    <img class="logo1" src="/static/logos/mowie.png">
+    <img class="logo2" src="/static/logos/aquacon.jpg">
+    <img class="logo2" src="/static/logos/acacia.jpg">
+    <img class="logo2" src="/static/logos/abebe.png">
+  </div>
+</div>
+<div id="content" class="d-flex flex-column">
+  <div><img src="/static/child.jpg"></div>
+  <div class="mt-auto" id="footer">PROVIEW, the Acacia Water project viewer</div>
 </div>
 </div>
 </div>
-<div class="note">
-<p>The Groundwater Mapping for Climate Resilient WASH in Ethiopia partnership - GW4E has
-been carried out by Acacia Water in cooperation with Dr. Seifu
-Kebede, Mr. Abebe Ketema, Acquacon Engineering, Ministry of Water, Irrigation and Energy
-- MOWIE, EU-JRC and the full leadership and support of UNICEF Ethiopia.
-The project has been funded by the EU-RESET II program and has been carried out between June 2018 and
-December 2019.</p>
-<small class="float-right">1 April 2020</small>
-</div>
-</div>
-{% endblock content %}
+</body>
+</html>
