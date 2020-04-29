@@ -6,8 +6,8 @@ from owslib.feature.schema import get_schema
 import json
 import geopandas as gpd
 
-def properties(request, pk):
-    ''' return property list of a wfs layer '''
+def properties1(request, pk):
+    ''' return property list of a wfs layer using DescribeFeature '''
     layer = get_object_or_404(Layer, pk=pk)
     schema = get_schema(layer.server.url, layer.layername, version=layer.server.version)
     return JsonResponse({
@@ -16,6 +16,21 @@ def properties(request, pk):
             'name': layer.layername,
             'geometry': schema.get('geometry'),
             'properties': schema.get('properties')
+        }})
+    
+    
+def properties(request, pk):
+    ''' return property list of a wfs layer using GetFeature '''
+    layer = get_object_or_404(Layer, pk=pk)
+    response = layer.server.service.getfeature(typename=layer.layername,maxfeatures=1,outputFormat='GeoJSON')
+    data = json.loads(response.read())
+    features = gpd.GeoDataFrame.from_features(data)
+    return JsonResponse({
+        'layer': {
+            'id': layer.pk, 
+            'name': layer.layername,
+            'geometry': features.geometry.name,
+            'properties': {key:str(val) for key, val in features.dtypes.items()}
         }})
 
 def statistics(request, pk):

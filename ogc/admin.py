@@ -92,9 +92,9 @@ class LegendForm(ModelForm):
                 
     def __init__(self, *args, **kwargs):
         super(LegendForm, self).__init__(*args, **kwargs)
-        choices = ((None,'--------'),('select','select'))
+        choices = [('','--------'),]
         if self.instance is not None and hasattr(self.instance,'layer'):
-            choices = self.get_choices(self.instance.layer)
+            choices += self.get_choices(self.instance.layer)
         self.fields['property'].widget = Select(choices=choices)    
         
 class WFS_server_filter(SimpleListFilter):

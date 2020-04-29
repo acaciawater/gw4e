@@ -37,7 +37,24 @@ class Legend(models.Model):
         response = service.getfeature(typename=self.layer.layername,propertyname=self.property,outputFormat='GeoJSON')
         data = json.loads(response.read())
         return gpd.GeoDataFrame.from_features(data)
-    
+
+    def dup(self, legend):
+        ''' Duplicate class boundaries from another legend'''
+        
+        def clone(o):
+            o.pk = None
+            o.legend = self
+            o.save()
+             
+        self.range_set.all().delete()
+        for r in legend.range_set.all():
+            clone(r)
+
+        self.value_set.all().delete()
+        for v in legend.value_set.all():
+            clone(v)
+            
+        
     def create_default(self, series=None):
         
         quantiles = [0,0.25,0.5,0.75,1.0]
@@ -75,7 +92,7 @@ class Legend(models.Model):
                             color = hsv2hex(float(index) / float(series.size-1))
                             self.value_set.create(value=value[:40], color = color, label = str(value))
  
-    
+
 class Entry(models.Model):
     legend = models.ForeignKey(Legend,on_delete=models.CASCADE)
     color = models.CharField(max_length=20)    

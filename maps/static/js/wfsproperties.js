@@ -12,7 +12,7 @@
 					  // remove all options but the first
 					  $('#id_property option:gt(0)').remove();
 					  const $el = $('#id_property') 
-					  Object.keys(response.layer.properties).forEach(p => $el.append(`<option value="${p}">${p}</option>`))
+					  Object.keys(response.layer.properties).forEach(p => $el.append(`<option>${p}</option>`))
 					  $el.val(prop)
 				  })
 			  }
