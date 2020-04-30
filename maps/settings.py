@@ -12,20 +12,27 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['.acaciadata.com', 'localhost']
+# Sensitive information
+SECRET_KEY = os.environ['SECRET_KEY']
+DEBUG = os.environ.get('DEBUG',True)
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS','').split(',')
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD':os.environ.get('DB_PASSWORD'),
+        'HOST':os.environ.get('DB_HOST'),
+    }
+}
+GOOGLE_MAPS_API_KEY = os.environ['GOOGLE_MAPS_API_KEY']
+THUMBNAIL_REDIS_HOST = os.environ['REDIS_HOST']
+THUMBNAIL_REDIS_PORT = os.environ['REDIS_PORT']
 
 SITE_ID = 1
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,7 +81,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'maps.wsgi.application'
 
 
-
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
@@ -117,26 +123,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD':os.environ.get('DB_PASSWORD'),
-        'HOST':os.environ.get('DB_HOST'),
-    }
-}
-
-SECRET_KEY = os.environ['SECRET_KEY']
-GOOGLE_MAPS_API_KEY = os.environ['GOOGLE_MAPS_API_KEY']
-
-CORS_ORIGIN_ALLOW_ALL = True
 
 #THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
 THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
+THUMBNAIL_KVSTORE='sorl.thumbnail.kvstores.redis_kvstore.KVStore'
 
 LOGGING = {
     'version': 1,
