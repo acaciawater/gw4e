@@ -11,7 +11,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import os
-from .secrets import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,6 +20,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+ALLOWED_HOSTS = ['.acaciadata.com', 'localhost']
 
 SITE_ID = 1
 
@@ -39,7 +40,6 @@ INSTALLED_APPS = [
     'wms',
     'wfs',
     'ogc',
-    'debug_toolbar',
     'sorl.thumbnail',
 ]
 
@@ -52,10 +52,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
-
-INTERNAL_IPS = [
-    #'127.0.0.1',
 ]
 
 ROOT_URLCONF = 'maps.urls'
@@ -126,15 +122,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gw4e',
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD':os.environ.get('DB_PASSWORD'),
+        'HOST':os.environ.get('DB_HOST'),
     }
 }
+
+SECRET_KEY = os.environ['SECRET_KEY']
+GOOGLE_MAPS_API_KEY = os.environ['GOOGLE_MAPS_API_KEY']
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 #THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
 THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
