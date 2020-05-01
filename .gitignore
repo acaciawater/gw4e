@@ -12,3 +12,4 @@ node_modules
 env
 /maps.json
 /media/
+/static/
