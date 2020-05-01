@@ -17,10 +17,11 @@ from django.views.generic.detail import DetailView
 from .models import Map
 from maps.models import DocumentGroup, Layer
 from sorl.thumbnail.shortcuts import get_thumbnail
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-#class MapDetailView(LoginRequiredMixin, DetailView):
-class MapDetailView(DetailView):
+class MapDetailView(LoginRequiredMixin, DetailView):
     ''' View with leaflet map, legend and layer list '''
     model = Map
 
@@ -38,7 +39,7 @@ class MapDetailView(DetailView):
 
 
 @csrf_exempt
-#@login_required
+@login_required
 def reorder(request, pk):
     ''' reorder layers in map
         request.body contains ids of layers as json array in proper order
@@ -60,7 +61,7 @@ def reorder(request, pk):
     return HttpResponse(status=200)
 
 @csrf_exempt
-#@login_required
+@login_required
 def toggle(request, mapid, layid):
     '''
         Toggle visibility of a layer
@@ -77,7 +78,7 @@ def toggle(request, mapid, layid):
 class HomeView(TemplateView):
     template_name = 'home.html'
 
-class BrowseView(TemplateView):
+class BrowseView(LoginRequiredMixin, TemplateView):
     template_name = 'browse.html'
     
 class OverlayView(TemplateView):
@@ -118,13 +119,13 @@ def map_proxy(request):
     return redirect('map-detail', pk=clustermap.pk)
 
 
-#@login_required
+@login_required
 def get_map(request, pk):
     ''' return user's layer configuration for all groups in the map '''
     map_obj = get_object_or_404(Map, pk=pk)
     return HttpResponse(map_obj.to_json(), content_type='application/json')
 
-#@login_required
+@login_required
 def docs2json(request):
     ''' return json response with all documents grouped by theme '''
     
