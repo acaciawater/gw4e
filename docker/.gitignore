@@ -1,0 +1,4 @@
+/media
+/initdb.d/
+/django.env
+/pg.env
