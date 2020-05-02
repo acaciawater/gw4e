@@ -13,3 +13,5 @@ env
 /maps.json
 /media/
 /static/
+/pg.env
+/django.env
