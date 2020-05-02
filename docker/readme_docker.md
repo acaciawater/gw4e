@@ -1,26 +1,29 @@
 GW4E for Docker
 ===============
 This Docker setup contains: GW4E code, postgres and redis (for cache and thumbnails)
+The postgres database will be stored in ./pgdata
 
 ### Define django secrets in django.env
 
-> DEBUG=&lt;True|False&gt;  
-ALLOWED_HOSTS=&lt;allowed hosts&gt;  
+```
+DEBUG=<True|False>  
+ALLOWED_HOSTS=<allowed hosts>
 DB_HOST=db  
-DB_NAME=&lt;database&gt;  
-DB_USER=&lt;username&gt;  
-DB_PASSWORD=&lt;password&gt;  
+DB_NAME=<database>
+DB_USER=<username>
+DB_PASSWORD=<password>
 REDIS_HOST=redis  
 REDIS_PORT=6379  
-SECRET_KEY=&lt;secret key&gt;  
-GOOGLE\_MAPS\_API_KEY=&lt;api key&gt;  
-
+SECRET_KEY=<secret key>
+GOOGLE_MAPS_API_KEY=<api key>
+```
 ### Define postgres secrets in pg.env
 
-> POSTGRES_DB=&lt;database&gt;  
-POSTGRES_USER=&lt;username&gt;  
-POSTGRES_PASSWORD=&lt;password&gt;  
-
+```
+POSTGRES_DB=<database>
+POSTGRES_USER=<username>
+POSTGRES_PASSWORD=<password>
+```
 ### Import existing data
 
 1. dump your existing database using pg_dump and put the sql file in the ./intdb.d directory
