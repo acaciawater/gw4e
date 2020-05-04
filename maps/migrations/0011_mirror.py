@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('wms', '0002_auto_20190708_1448'),
-        ('maps', '0010_auto_20190823_1519_squashed_0011_auto_20190823_1522'),
+        ('maps', '0011_auto_20190823_1522'),
     ]
 
     operations = [
