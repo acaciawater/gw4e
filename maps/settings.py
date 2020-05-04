@@ -44,8 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.gis',
     'maps',
-    'wms',
-    'wfs',
     'ogc',
     'sorl.thumbnail',
 ]
