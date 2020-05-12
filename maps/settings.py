@@ -16,21 +16,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Sensitive information
-SECRET_KEY = os.environ['SECRET_KEY']
-DEBUG = os.environ.get('DEBUG',True)
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS','').split(',')
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG',True)
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','').split(',')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD':os.environ.get('DB_PASSWORD'),
-        'HOST':os.environ.get('DB_HOST'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD':os.getenv('DB_PASSWORD'),
+        'HOST':os.getenv('DB_HOST'),
     }
 }
-GOOGLE_MAPS_API_KEY = os.environ['GOOGLE_MAPS_API_KEY']
-THUMBNAIL_REDIS_HOST = os.environ['REDIS_HOST']
-THUMBNAIL_REDIS_PORT = os.environ['REDIS_PORT']
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+THUMBNAIL_REDIS_HOST = os.getenv('REDIS_HOST')
+THUMBNAIL_REDIS_PORT = os.getenv('REDIS_PORT')
 
 SITE_ID = 1
 
