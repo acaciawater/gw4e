@@ -47,15 +47,44 @@ class WFSLayer {
 		  }
 		  url = u.toString()
 	  }
-	  return fetch(url,{cache:'default'}).then(response => {
+
+	  return fetch(url).then(response => {
 		  return response.text().then(text => {
 			  if (text.startsWith('<ServiceExceptionReport')) {
 				  this.throwServiceException(text)
 			  }
-			  else {
-				  return JSON.parse(text)
-			  }
+			  return JSON.parse(text)
 		  })
+	  })
+  }
+
+  /**
+   * load json data using Cache API
+   */
+  async cacheJSON(url, options) {
+	  if (options) {
+		  // add options to query string
+		  let u = new URL(url)
+		  for (let [key, value] of Object.entries(options)) {
+			  u.searchParams.append(key,value)
+		  }
+		  url = u.toString()
+	  }
+
+	  let cache = await caches.open('wfs-v1')
+	  let response = await cache.match(url)
+	  if (response === undefined) {
+		  await cache.add(url)
+		  response = await cache.match(url)
+		  if (response === undefined) {
+			  throw {errors: "bad response status"}
+		  }
+	  }
+	  return response.text().then(text => {
+		  if (text.startsWith('<ServiceExceptionReport')) {
+			  this.throwServiceException(text)
+		  }
+		  return JSON.parse(text)
 	  })
   }
   
@@ -74,7 +103,7 @@ class WFSLayer {
    */
   loadFeatures(url, options) {
 	  this.layer.fire('loading')
-	  return this.fetchJSON(url,options).then(response => {
+	  return this.cacheJSON(url,options).then(response => {
 		  this.features = response.features
 		  this.layer.fire('load')
 		  return this.features
