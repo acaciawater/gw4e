@@ -136,8 +136,9 @@ DATABASES = {
     }
 }
 
-#THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
-THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
+THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
+#THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
+THUMBNAIL_FORMAT='PNG'
 
 LOGGING = {
     'version': 1,
