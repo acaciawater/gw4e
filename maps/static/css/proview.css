@@ -14,6 +14,13 @@ body {
 	overflow-y: scroll;
 }
 
+
+.modal-body {
+	position: relative;
+	max-height: 600px;
+	overflow-y: scroll;
+}
+
 .modal-xl {
 	min-width: 60%;
 }
