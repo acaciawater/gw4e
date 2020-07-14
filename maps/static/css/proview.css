@@ -8,12 +8,13 @@ body {
 	opacity: 0.9;
 }
 
+/*
 .modal-dialog, 
 .modal-content {
 	max-height: 90%;
 	overflow-y: scroll;
 }
-
+*/
 
 .modal-body {
 	position: relative;
