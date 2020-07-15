@@ -156,7 +156,7 @@ def docs2json(request):
                 'description': doc.description,
                 }
             if doc.doc:
-                item['url'] = doc.doc.url
+                item['url'] = doc.url
                 try:
                     with engine(doc.doc.name):
                         img = get_thumbnail(doc.doc, 'x600')
