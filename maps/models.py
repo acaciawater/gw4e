@@ -228,6 +228,7 @@ class DocumentGroup(models.Model):
     name = models.CharField(max_length=100)    
     parent = models.ForeignKey('DocumentGroup', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
     open = models.BooleanField(default=False)
+    order = models.PositiveSmallIntegerField(default=1)
     
     def docs(self,cluster=0):
         ''' returns complete list of documents of this group and its children '''
@@ -266,6 +267,7 @@ class Document(models.Model):
     description = models.TextField(blank=True, null=True)
     url = models.URLField(blank=True)
     doc = ImageField(upload_to=upload_to_cluster, blank=True, null=True)
+    order = models.PositiveSmallIntegerField(default=1)
     
     def __str__(self):
         return self.name

@@ -140,13 +140,13 @@ def docs2json(request):
             'folders': []
         }
         result.append(data)
-        for child in group.children.all():
+        for child in group.children.order_by('order'):
             if not child.empty(cluster):
                 process_group(cluster, child, data['folders'])
 
     def process_docs(cluster, group):
         result = []
-        queryset = group.document_set.order_by('cluster','name')
+        queryset = group.document_set.order_by('cluster','order','name')
         if cluster:
             queryset = queryset.filter(Q(cluster=cluster)|Q(cluster=0))
         for doc in queryset:
