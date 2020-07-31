@@ -1,4 +1,3 @@
-# pylint: disable=W0614
 """
 Django settings for maps project.
 
@@ -11,20 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import os
-from .secrets import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+DEBUG = os.getenv('DEBUG', True)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = os.getenv('SECRET_KEY')
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','*').split(',')
 
 SITE_ID = 1
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -39,7 +35,6 @@ INSTALLED_APPS = [
     'wms',
     'wfs',
     'ogc',
-    'debug_toolbar',
     'sorl.thumbnail',
 ]
 
@@ -51,11 +46,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
-
-INTERNAL_IPS = [
-    #'127.0.0.1',
 ]
 
 ROOT_URLCONF = 'maps.urls'
@@ -77,7 +67,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'maps.wsgi.application'
-
 
 
 # Password validation
@@ -122,19 +111,21 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    },
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gw4e',
-    }
+        'ENGINE': os.getenv('DB_ENGINE','django.db.backends.postgresql'),
+        'HOST': os.getenv('DB_HOST'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+    },
 }
+
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
 #THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
