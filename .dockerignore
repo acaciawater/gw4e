@@ -1,3 +1,5 @@
 **/.*
 **/*.sql
 **/*.env
+./media/
+./initdb.d/
