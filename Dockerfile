@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	ghostscript
 
 WORKDIR /code
-RUN git clone https://github.com/acaciawater/gw4e.git .
-RUN pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install -U pip && pip install -r requirements.txt
 EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
