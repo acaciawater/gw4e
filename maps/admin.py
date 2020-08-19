@@ -213,10 +213,10 @@ class DocumentAdmin(admin.ModelAdmin):
             kwargs['queryset'] = DocumentGroup.objects.order_by('parent__name','name')
         return admin.ModelAdmin.formfield_for_foreignkey(self, db_field, request, **kwargs)
 
-    def save_model(self, request, obj, form, change):
-        if not obj.url:
-            obj.url = unquote(request.scheme + '://' + request.get_host() + obj.doc.url)
-        admin.ModelAdmin.save_model(self, request, obj, form, change)
+#     def save_model(self, request, obj, form, change):
+#         if not obj.url:
+#             obj.url = unquote(request.scheme + '://' + request.get_host() + obj.doc.url)
+#         admin.ModelAdmin.save_model(self, request, obj, form, change)
         
 @register(DocumentGroup)
 class DocumentGroupAdmin(admin.ModelAdmin):

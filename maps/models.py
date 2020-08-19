@@ -265,7 +265,7 @@ class Document(models.Model):
     cluster = models.CharField(max_length=30,blank=True,null=True)
     name = models.CharField(max_length=100)    
     description = models.TextField(blank=True, null=True)
-    url = models.URLField(blank=True)
+    url = models.URLField(blank=True,null=True)
     doc = ImageField(upload_to=upload_to_cluster, blank=True, null=True)
     order = models.PositiveSmallIntegerField(default=1)
     
