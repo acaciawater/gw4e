@@ -13,6 +13,7 @@ from ogc.models import Layer as OGCLayer
 from .forms import LayerPropertiesForm, SelectMapForm
 from .models import Map, Layer, Group, DocumentGroup, Document
 from collections import OrderedDict
+from urllib.parse import unquote
 
 
 admin.site.site_header = 'GW4E Administration'
@@ -214,7 +215,7 @@ class DocumentAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not obj.url:
-            obj.url = request.scheme + '://' + request.get_host() + obj.doc.url
+            obj.url = unquote(request.scheme + '://' + request.get_host() + obj.doc.url)
         admin.ModelAdmin.save_model(self, request, obj, form, change)
         
 @register(DocumentGroup)
