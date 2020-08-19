@@ -129,8 +129,8 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 THUMBNAIL_ENGINE='sorl.thumbnail.engines.convert_engine.Engine' # use only for PDF conversion
 #THUMBNAIL_ENGINE='sorl.thumbnail.engines.pil_engine.Engine'
-#THUMBNAIL_FORMAT='PNG' thumbnails become too dark??
-THUMBNAIL_PRESERVE_FORMAT=True
+THUMBNAIL_FORMAT='PNG' 
+THUMBNAIL_COLORSPACE='sRGB'
 
 LOGGING = {
     'version': 1,
