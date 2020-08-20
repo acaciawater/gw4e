@@ -28,3 +28,5 @@ class Command(BaseCommand):
                     im=get_thumbnail(doc.doc, geom)
                     if im is None:
                         logger.error('failed')
+                    else:
+                        logger.info(im)

@@ -153,12 +153,12 @@ LOGGING = {
     'loggers': {
         'sorl.thumbnail': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'formatter': 'simple'
         },
         'maps': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'formatter': 'simple'
         },
     }
