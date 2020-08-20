@@ -1,5 +1,0 @@
-#!/bin/bash
-set -a
-source django.env
-gunicorn --env DJANGO_SETTINGS_MODULE=maps.settings --access-logfile access.log --error-logfile error.log maps.wsgi
-
