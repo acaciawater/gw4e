@@ -72,7 +72,8 @@ class Server(models.Model):
             if created:
                 numCreated += 1
         return numCreated
-                
+
+        
     class Meta:
         verbose_name = _('Server')
         
