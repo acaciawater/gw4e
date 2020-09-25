@@ -133,13 +133,13 @@ async function addOverlays (map, list, layers) {
 		    overlay.id = id
 		    overlay.layerDefn = layer
 	    	const icon = layer.visible ? iconVisible : iconInvisible
-		    let item = `<li id=layer_${layer.id} class="list-group-item py-1">
+		    let item = `<li id=layer_${layer.id} class="layer list-group-item py-1">
 		        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event, ${layer.id})"></i>
 		        <span data-toggle="collapse" href="#legend_${id}">${layer.name}</span><i id="status_${id}" class="float-right"></i>`
-		    if (layer.downloadUrl) {
-		      item += `<a href="${layer.downloadUrl}"><i class="fas fa-file-download float-right" title="download"></i></a>`
+		    if (layer.downloadable) {
+		    	item += `<a class="download-link" href="/ows/download/${layer.layer_id}"><i class="fas fa-arrow-alt-circle-down float-right" title="download ${layer.name}"></i></a>`
 		    }
-		    if (layer.legend) {
+	        if (layer.legend) {
 		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
 		    }
 	    	if (overlay.wfs) {

@@ -69,6 +69,15 @@ html, body {
   height: 24px;
 }
 
+.download-link {
+	display: none;
+	color: black;
+}
+
+.layer:hover .download-link {
+	display: inline;
+}
+
 a.cog {
   color: white;
   text-decoration: none;

@@ -80,7 +80,7 @@ class Map(MapsModel):
                      'layer_id': layer.layer.id,
                      'name': layer.layer.title,
                      'url': layer.layer.server.url,
-                     'download_url': layer.download_url,
+                     'downloadable': layer.allow_download,
                      'clickable': layer.clickable,
 #                      'stylesheet': layer.stylesheet,
                      'visible': layer.visible,
@@ -188,8 +188,6 @@ class Layer(MapsModel):
     allow_download = models.BooleanField(default=False, verbose_name=_(
         'downloadable'), help_text=_('user can download this layer'))
     allow_download.Boolean = True
-    download_url = models.URLField(_('download url'), null=True, blank=True, help_text=_(
-        'url for download of entire layer'))
     stylesheet = models.URLField(_('stylesheet'), null=True, blank=True, help_text=_(
         'url of stylesheet for GetFeatureInfo response'))
 

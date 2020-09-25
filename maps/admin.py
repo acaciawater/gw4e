@@ -13,7 +13,6 @@ from ogc.models import Layer as OGCLayer
 from .forms import LayerPropertiesForm, SelectMapForm
 from .models import Map, Layer, Group, DocumentGroup, Document
 from collections import OrderedDict
-from urllib.parse import unquote
 
 
 admin.site.site_header = 'GW4E Administration'
@@ -60,10 +59,9 @@ class LayerAdmin(admin.ModelAdmin):
               ('opacity', 'transparent'),
               ('minzoom', 'maxzoom'),
               ('properties', 'clickable'),
-              'stylesheet',
-              ('download_url', 'allow_download'),
+              'stylesheet','allow_download'
               )
-    list_filter = ('visible', 'map', 'group',
+    list_filter = ('visible', 'map', 'group', 'map__user',
                    'layer__server', 'allow_download')
     list_display = ('layer', 'map', 'group', 'extent', 'use_extent')
     search_fields = ('layer__title',)
