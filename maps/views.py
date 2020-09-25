@@ -21,7 +21,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-class MapDetailView(LoginRequiredMixin, DetailView):
+# class MapDetailView(LoginRequiredMixin, DetailView):
+class MapDetailView(DetailView):
     ''' View with leaflet map, legend and layer list '''
     model = Map
 
@@ -39,13 +40,13 @@ class MapDetailView(LoginRequiredMixin, DetailView):
 
 
 @csrf_exempt
-@login_required
+#@login_required
 def reorder(request, pk):
     ''' reorder layers in map
         request.body contains ids of layers as json array in proper order
     '''
     if not request.user.is_authenticated:
-        return HttpResponse('Authentication required to reorder layers.', status=401)
+        return HttpResponse('Authentication required to persist order of layers.', status=401)
  
     usermap = get_object_or_404(Map, pk=pk, user=request.user) # add user to query to make user user owns the map
     layer_ids = json.loads(request.body.decode('utf-8'))
@@ -61,14 +62,14 @@ def reorder(request, pk):
     return HttpResponse(status=200)
 
 @csrf_exempt
-@login_required
+# @login_required
 def toggle(request, mapid, layid):
     '''
         Toggle visibility of a layer
     '''
     
     if not request.user.is_authenticated:
-        return HttpResponse('Authentication required to toggle visibility of layers.', status=401)
+        return HttpResponse('Authentication required to persist visibility of layers.', status=401)
     
     layer = get_object_or_404(Layer, pk=layid)
     layer.visible = not layer.visible
@@ -78,7 +79,8 @@ def toggle(request, mapid, layid):
 class HomeView(TemplateView):
     template_name = 'home.html'
 
-class BrowseView(LoginRequiredMixin, TemplateView):
+# class BrowseView(LoginRequiredMixin, TemplateView):
+class BrowseView(TemplateView):
     template_name = 'browse.html'
     
 class OverlayView(TemplateView):
@@ -119,13 +121,13 @@ def map_proxy(request):
     return redirect('map-detail', pk=clustermap.pk)
 
 
-@login_required
+# @login_required
 def get_map(request, pk):
     ''' return user's layer configuration for all groups in the map '''
     map_obj = get_object_or_404(Map, pk=pk)
     return HttpResponse(map_obj.to_json(), content_type='application/json')
 
-@login_required
+# @login_required
 def docs2json(request):
     ''' return json response with all documents grouped by theme '''
     
