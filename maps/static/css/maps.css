@@ -65,6 +65,10 @@ html, body {
   height: 48px;
 }
 
+.logosmall {
+  height: 24px;
+}
+
 a.cog {
   color: white;
   text-decoration: none;

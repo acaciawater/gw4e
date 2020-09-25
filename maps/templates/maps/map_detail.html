@@ -118,6 +118,7 @@ body, .outer {
 {% block header %}
 <nav class="navbar navbar-dark unibar">
 	<li class="nav nav-brand nav-item dropdown">
+	    <a href="{% url 'home' %}"><img class="logosmall mt-2" src="/static/home-white.png"></a>
         <a class="nav-link dropdown-toggle unibar" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{object.name}}
         </a>
