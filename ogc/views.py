@@ -97,14 +97,22 @@ def download(request, pk):
     '''
     download layer from server
     query parameters (all optional):
-    - srs: srs of output. default=32737 (WGS84/UTM 37N)
+    - dpi: output resolution, default=96 (QGIS servers only)
+    - srs: srs of output
     - bbox: bounding box in srs units
     - width: output width in pixels
     - height: output width in pixels
-    - scale: desired output scale in srs units. Note that scale overrides width/height parameters 
+    - scale desired output scale in srs units. Note that scale overrides width/height parameters 
     '''
     layer = get_object_or_404(Layer,pk=pk)
-    filename, content, content_type = layer.download(**request.GET)
+    options = request.GET.dict()
+    if not 'dpi' in options:
+        options.update(dpi=96)
+    if not 'srs' in options:
+        options.update(srs='EPSG:32637')
+#     if not 'scale' in options:
+#         options.update(scale=250000)
+    filename, content, content_type = layer.download(**options)
     response = HttpResponse(content, content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename={filename}'
     return response

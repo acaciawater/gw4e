@@ -73,7 +73,8 @@ class Layer(models.Model):
         '''
         download layer from server
         options:
-        - srs: srs of output. default=32737 (WGS84/UTM 37N)
+        - dpi: output resolution, default=96 (QGIS servers only)
+        - srs: srs of output
         - bbox: bounding box in srs units
         - width: output width in pixels
         - height: output width in pixels
@@ -81,40 +82,51 @@ class Layer(models.Model):
         '''
         service = self.server.service
     
-        # TODO: implement bbox and custom srs (defaults to WGS84/UTM 37N)
+        srs = options.get('srs')
+
+        # TODO: implement bbox
         if self.server.service_type == 'WMS':
-            # TODO: implement custom scale
             
+            dpi = int(options.get('dpi', 96))
+
+            scale = int(options.get('scale', 0))
+
             details = self.details()
-    #         scale = int(options.get('scale',0)) 
-    #         srs = options.get('srs','32737')
-    #         if srs:
-    #             try:
-    #                 bbox = next(filter(lambda b: b[-1] == srs, details.crs_list))
-    #             except StopIteration:
-    #                 return HttpResponseBadRequest(f'SRS not supported: {srs}') 
-    #         else:
-            # default SRS
-            bbox = details.boundingBox
-            srs = bbox[-1]
-            
-            size = (bbox[2]-bbox[0], abs(bbox[3]-bbox[1]))
-            height = int(options.get('height',0))
-            width = int(options.get('width',0))
-            if height == 0 and width == 0:
-                # default size is 400 pix high and auto width
-                height = 400
-            if width == 0:
-                width = int((height * size[0]) / size[1])
-            elif height == 0:
-                height = int((width * size[1]) / size[0])
-                
+            if srs:
+                try:
+                    bbox = next(filter(lambda b: b[-1] == srs, details.crs_list))
+                except StopIteration:
+                    raise ValueError(f'SRS={srs} not supported by WMS server') 
+            else:
+                # default SRS
+                bbox = details.boundingBox
+                srs = bbox[-1]
+
+            # size in map coordinates
+            sizex, sizey = (bbox[2]-bbox[0], abs(bbox[3]-bbox[1]))
+            if scale:
+                dpm = float(dpi) / 0.0254
+                width = sizex / scale * dpm
+                height = sizey / scale * dpm
+            else:
+                height = int(options.get('height',0))
+                width = int(options.get('width',0))
+                if height == 0 and width == 0:
+                    # default size is 600 pix high and auto width
+                    height = 600
+                if width == 0:
+                    width = int((height * sizex) / sizey)
+                elif height == 0:
+                    height = int((width * sizey) / sizex)
+            width = round(width)
+            height = round(height)
             image = service.getmap(layers = [self.layername], 
                                 bbox = bbox[:-1],
-                                format = 'image/png',
+                                format = 'image/jpeg',
                                 srs = srs,
                                 size = (width, height),
-                                transparent = True
+#                                 transparent = True,
+                                dpi = dpi
                                 )
             # QGIS server does not support geoTIFF output
             # user rasterio to convert PNG output to geoTIFF
@@ -124,11 +136,13 @@ class Layer(models.Model):
                                   dtype='uint8', 
                                   width=width, 
                                   height=height, 
-                                  count=4,
+                                  count=3,
                                   crs=srs,
-    #                               compress='JPEG',
-    #                               photometric='YCBCR',
-                                  transform=rio.Affine(size[0]/width, 0, bbox[0], 0, -size[1]/height, bbox[3])
+                                  compress='LZW',
+                                  # for lossy compression use settings below
+                                  # compress='JPEG',
+                                  # photometric='YCBCR',
+                                  transform=rio.Affine(sizex/width, 0, bbox[0], 0, -sizey/height, bbox[3])
                                   ) as dest:
                         dest.write(src.read())
                     return (f'{self.layername}.tif', tif.read(), 'image/tiff')
