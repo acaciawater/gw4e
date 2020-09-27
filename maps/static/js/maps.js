@@ -125,6 +125,12 @@ function propertyChanged(select, id) {
 	$(`#legend_${id} .legend-content`).html(content)
 }
 
+function opacityChanged(value, id) {
+	const overlay = overlayLayers[id]
+	overlay.layerDefn.options.opacity = value
+	overlay.setOpacity(value)
+}
+
 async function addOverlays (map, list, layers) {
   return layers.forEach(layer => {
     createOverlay(layer).then(overlay => {
@@ -135,13 +141,30 @@ async function addOverlays (map, list, layers) {
 	    	const icon = layer.visible ? iconVisible : iconInvisible
 		    let item = `<li id=layer_${layer.id} class="layer list-group-item py-1">
 		        <i class="pr-2 pl-0 pt-1 ${icon} float-left" onclick="toggleLayer(event, ${layer.id})"></i>
-		        <span data-toggle="collapse" href="#legend_${id}">${layer.name}</span><i id="status_${id}" class="float-right"></i>`
-		    if (layer.downloadable) {
-		    	item += `<a class="download-link" href="/ows/download/${layer.layer_id}"><i class="fas fa-arrow-alt-circle-down float-right" title="download ${layer.name}"></i></a>`
+		        <span data-toggle="collapse" href="#legend_${id}">${layer.name}</span>
+		        <i id="status_${id}" class="float-right"></i>`
+		    	
+		  	if (layer.downloadable) {
+		        // add download link that shows itself on hover
+		    	item += `<a class="download-link" href="/ows/download/${layer.layer_id}">
+		    		<i class="my-1 fas fa-arrow-alt-circle-down float-right" title="download ${layer.name}"></i>
+		    		</a>`
 		    }
+	        
+	        // add collapsible panel for legend
+	    	item += `<div class="collapse" id="legend_${id}" onclick="$(this).collapse('hide')">`
+
+	    	// insert opacity slider above legend
+	    	item += `<input id="opacity_${id}" type="range" min="0" max="100" value="${layer.options.opacity*100}"
+	    		class="slider" title="Opacity" 
+	    		onclick="event.stopPropagation()" // do not collapse when slider clicked 
+	    		oninput="opacityChanged(this.value/100.0, ${id})">`
+
 	        if (layer.legend) {
-		    	item += `<div class="collapse" id="legend_${id}"><img src="${layer.legend}"></img></div></li>`
+		    	item += `<img class="wms-legend" src="${layer.legend}"></img>`
 		    }
+	    	item += `</div></li>`
+
 	    	if (overlay.wfs) {
 				overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
 		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected value="">Choose...</option>`
@@ -209,18 +232,18 @@ function initMap (div, options, id) {
     pane: 'basePane'
   })
 
-  var stamen = L.tileLayer('https://tile.stamen.com/terrain/{z}/{x}/{y}.png', {
-    attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>, under <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="https://openstreetmap.org">OpenStreetMap</a>, under <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.',
-    pane: 'basePane',
-  })
-  
   var roads = L.gridLayer.googleMutant({
     type: 'roadmap', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
     pane: 'basePane'
   })
 
+  var terrain = L.gridLayer.googleMutant({
+    type: 'terrain', 
+    pane: 'basePane'
+  })
+
   var satellite = L.gridLayer.googleMutant({
-    type: 'satellite', // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid',
+    type: 'satellite', 
     pane: 'basePane'
   })
 
@@ -234,7 +257,7 @@ function initMap (div, options, id) {
     pane: 'basePane'
   })
 
-  const baseMaps = { Openstreetmap: osm, 'Terrain': stamen, 'Google maps': roads, 'Google satellite': satellite, 'ESRI topo': topo, 'ESRI satellite': imagery }
+  const baseMaps = { Openstreetmap: osm, 'Google maps': roads, 'Google satellite': satellite, 'Terrain': terrain, 'ESRI topo': topo, 'ESRI satellite': imagery }
   const overlayMaps = {}
   map.layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map)
 

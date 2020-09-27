@@ -93,7 +93,10 @@ $(function() {
 				})
 			})
 		})
-	})	
+	})
+	$(".slider").oninput = function() {
+		
+	}
 });
 
 </script>
@@ -111,6 +114,24 @@ body, .outer {
 .list-group-item {
   padding-top: 0;
   padding-bottom: 0;
+}
+
+
+.slider {
+	width: 100%;
+}
+
+.slider-container {
+	display: none;
+	width: 100%;
+}
+
+.layer:hover .slider-container {
+	display: block;
+}
+
+.wms-legend {
+/*	margin-top: -1em; */
 }
 
 </style>
