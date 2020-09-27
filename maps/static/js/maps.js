@@ -150,22 +150,8 @@ async function addOverlays (map, list, layers) {
 		    		<i class="my-1 fas fa-arrow-alt-circle-down float-right" title="download ${layer.name}"></i>
 		    		</a>`
 		    }
-	        
-	        // add collapsible panel for legend
-	    	item += `<div class="collapse" id="legend_${id}" onclick="$(this).collapse('hide')">`
 
-	    	// insert opacity slider above legend
-	    	item += `<input id="opacity_${id}" type="range" min="0" max="100" value="${layer.options.opacity*100}"
-	    		class="slider" title="Opacity" 
-	    		onclick="event.stopPropagation()" // do not collapse when slider clicked 
-	    		oninput="opacityChanged(this.value/100.0, ${id})">`
-
-	        if (layer.legend) {
-		    	item += `<img class="wms-legend" src="${layer.legend}"></img>`
-		    }
-	    	item += `</div></li>`
-
-	    	if (overlay.wfs) {
+	        if (overlay.wfs) {
 				overlay.wfs.loadLegend(`/ows/legends/${layer.layer_id}`).then(legends => {
 		    		let select = `<select id="property_${id}" class="custom-select" onchange="propertyChanged(this,${id})"><option selected value="">Choose...</option>`
 			 			let index = 1
@@ -174,9 +160,26 @@ async function addOverlays (map, list, layers) {
 			 				index++;
 			 			})
 			 			select += '</select>'
-				    	$(`#layer_${layer.id}`).append(`<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div></div></li>`)
+				    	$(`#layer_${layer.id}`).append(`<div class="collapse" id="legend_${id}">${select}<div class="legend legend-content"><div>`)
 				})
 	    	}
+	        else {
+		        // add collapsible panel for legend
+		    	item += `<div class="collapse" id="legend_${id}" onclick="$(this).collapse('hide')">`
+	
+		    	// add opacity slider
+	    		item += `<input id="opacity_${id}" type="range" min="0" max="100" value="${layer.options.opacity*100}"
+		    		class="slider" title="Opacity" 
+		    		onclick="event.stopPropagation()" // do not collapse when slider clicked 
+		    		oninput="opacityChanged(this.value/100.0, ${id})">`
+	    			
+		        if (layer.legend) {
+		        	// add legend graphic
+			    	item += `<img class="wms-legend" src="${layer.legend}"></img>`
+			    }
+	        }
+	        item += `</div></li>`
+
 		    list.append(item)
 		
 		    const status = $(`#status_${id}`)
