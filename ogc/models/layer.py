@@ -112,8 +112,8 @@ class Layer(models.Model):
                 height = int(options.get('height',0))
                 width = int(options.get('width',0))
                 if height == 0 and width == 0:
-                    # default size is 600 pix high and auto width
-                    height = 600
+                    # set default height and auto width
+                    height = 1080 #600
                 if width == 0:
                     width = int((height * sizex) / sizey)
                 elif height == 0:
